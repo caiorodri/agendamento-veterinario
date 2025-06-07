@@ -1,0 +1,41 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /agendamentoveterinario
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: agendamentoveterinario
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/agendamento_veterinario
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+      
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: adotin2024@gmail.com
+    password: grjy zpbx axac axah
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+springdoc:
+    security:
+      enabled: false
+
+endereco: "Endereço"
+contato: "(99) 99999-9999"
