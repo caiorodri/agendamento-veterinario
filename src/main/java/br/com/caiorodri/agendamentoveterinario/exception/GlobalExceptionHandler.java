@@ -5,22 +5,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
+        
+    	return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    
+    }
+    
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
         
-    	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    	return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     
     }
 	
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception ex) {
-     
-    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                             .body("Erro interno no servidor: " + ex.getMessage());
-    
+
+    	return new ResponseEntity<>("Erro interno no servidor: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    	
     }
     
 }
