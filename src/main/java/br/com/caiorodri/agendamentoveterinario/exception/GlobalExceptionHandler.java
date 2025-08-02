@@ -11,24 +11,30 @@ import jakarta.persistence.EntityNotFoundException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException e) {
         
-    	return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    	return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     
     }
     
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
         
-    	return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    	return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    
+    }
+	
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<String> handleSecurityException(SecurityException e) {
+        
+    	return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     
     }
 	
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
+    public ResponseEntity<String> handleException(Exception e) {
 
-    	return new ResponseEntity<>("Erro interno no servidor: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    	return new ResponseEntity<>("Erro interno no servidor: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     	
     }
-    
 }
