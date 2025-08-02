@@ -1,6 +1,7 @@
 package br.com.caiorodri.agendamentoveterinario.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,12 +25,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 		   "LEFT JOIN FETCH u.perfil p " +
 		   "WHERE u.email = ?1 AND u.senha = ?2 " + 
 		   "AND u.status.id = 1")
-	public Usuario findByEmailAndSenha(String email, String senha);
+	public Optional<Usuario> findByEmailAndSenha(String email, String senha);
 
 	@Query("SELECT u FROM Usuario u " +
 			"LEFT JOIN FETCH u.perfil p " +
 			"WHERE u.email = ?1")
-	public Usuario findByEmail(String email);
+	public Optional<Usuario> findByEmail(String email);
 	
 	@Query("SELECT u FROM Usuario u " +
 		   "LEFT JOIN FETCH u.status s " +
