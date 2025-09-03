@@ -228,5 +228,3 @@ CREATE TABLE agendamento (
     CONSTRAINT agendamento_agendamento_status_fk FOREIGN KEY (id_agendamento_status) REFERENCES agendamento_status(id),
     CONSTRAINT agendamento_agendamento_tipo_fk FOREIGN KEY (id_agendamento_tipo) REFERENCES agendamento_tipo(id)
 );
-
-ALTER TABLE usuario AUTO_INCREMENT = 29;
