@@ -16,4 +16,6 @@ public class AnimalSimplesDTO {
 
 	private String nome;
 
+    private UsuarioSimplesDTO dono;
+
 }
