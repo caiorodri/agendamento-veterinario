@@ -13,13 +13,13 @@ public class AgendamentoDTO {
 
 	private Long id;
 
-	private AnimalDTO animal;
+	private AnimalSimplesDTO animal;
 
-	private UsuarioDTO cliente;
+	private UsuarioSimplesDTO cliente;
 
-	private UsuarioDTO veterinario;
+	private UsuarioSimplesDTO veterinario;
 	
-	private UsuarioDTO recepcionista;
+	private UsuarioSimplesDTO recepcionista;
 
 	private AgendamentoStatusDTO status;
 
@@ -33,16 +33,12 @@ public class AgendamentoDTO {
 
 	private LocalDateTime dataAgendamentoFinal;
 	
-	private String dataAgendamentoFormatada;
-	
-	private String horaAgendamentoFormatada;
-	
 	public AgendamentoDTO() {
 		
-		this.animal = new AnimalDTO();
-		this.cliente = new UsuarioDTO();
-		this.veterinario = new UsuarioDTO();
-		this.recepcionista = new UsuarioDTO();
+		this.animal = new AnimalSimplesDTO();
+		this.cliente = new UsuarioSimplesDTO();
+		this.veterinario = new UsuarioSimplesDTO();
+		this.recepcionista = new UsuarioSimplesDTO();
 		this.status = new AgendamentoStatusDTO();
 		this.tipo = new AgendamentoTipoDTO();
 	

@@ -2,17 +2,7 @@ package br.com.caiorodri.agendamentoveterinario.mapper;
 
 import java.util.List;
 
-import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoStatusDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoTipoDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.AnimalDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.EnderecoDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.EspecieDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.PerfilDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.RacaDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.SexoDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.StatusDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.UsuarioDTO;
+import br.com.caiorodri.agendamentoveterinario.dto.*;
 import br.com.caiorodri.agendamentoveterinario.model.Agendamento;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
@@ -27,6 +17,9 @@ import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 
 @org.mapstruct.Mapper(componentModel = "spring")
 public interface Mapper {
+
+    UsuarioSimplesDTO usuarioToUsuarioSimplesDto(Usuario usuario);
+    AnimalSimplesDTO animalToAnimalSimplesDto(Animal animal);
 
     UsuarioDTO usuarioToDto(Usuario usuario);
     Usuario dtoToUsuario(UsuarioDTO usuarioDTO);

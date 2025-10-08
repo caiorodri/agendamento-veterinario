@@ -34,6 +34,10 @@ public class UsuarioDTO {
 	private List<String> telefones;
 
 	private boolean emailRealizarConsultaRecebido;
+
+    private List<AgendamentoDTO> agendamentos;
+
+    private List<AnimalDTO> animais;
 	
 	public UsuarioDTO() {
 		
@@ -41,6 +45,8 @@ public class UsuarioDTO {
 		this.telefones = new ArrayList<>();
 		this.perfil = new PerfilDTO();
 		this.status = new StatusDTO();
+        this.agendamentos = new ArrayList<>();
+        this.animais = new ArrayList<>();
 		
 	}
 	

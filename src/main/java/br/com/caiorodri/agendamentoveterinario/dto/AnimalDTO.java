@@ -1,12 +1,13 @@
 package br.com.caiorodri.agendamentoveterinario.dto;
 
-import java.util.Date;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -33,13 +34,15 @@ public class AnimalDTO {
 	
 	private float altura;
 	
-	private UsuarioDTO dono;
+	private UsuarioSimplesDTO dono;
+
+    private List<AgendamentoDTO> agendamentos;
 	
 	public AnimalDTO() {
 		
 		this.raca = new RacaDTO();
 		this.sexo = new SexoDTO();
-		this.dono = new UsuarioDTO();
+		this.dono = new UsuarioSimplesDTO();
 		
 	}
 	
