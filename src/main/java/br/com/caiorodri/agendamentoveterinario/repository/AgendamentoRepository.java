@@ -69,11 +69,13 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 	public Page<Agendamento> findProximosByAnimal(Long idAnimal, LocalDateTime date, Pageable pageable);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
-		   "WHERE a.animal.id = ?1")
+		   "WHERE a.animal.id = ?1 " +
+            "ORDER BY a.dataAgendamentoInicio DESC")
 	public Page<Agendamento> findByAnimal(Long idAnimal, Pageable pageable);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
-		   "WHERE a.cliente.id = ?1")
+		   "WHERE a.cliente.id = ?1 " +
+            "ORDER BY a.dataAgendamentoInicio DESC")
 	public Page<Agendamento> findByUsuario(Long idUsuario, Pageable pageable);
 	
 	@Query("SELECT a FROM Agendamento a WHERE a.animal.id = ?1 ORDER BY a.dataAgendamentoInicio DESC LIMIT 1")
