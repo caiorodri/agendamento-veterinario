@@ -2,6 +2,7 @@ package br.com.caiorodri.agendamentoveterinario.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,12 +27,14 @@ public class Agendamento {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_animal")
+    @JsonBackReference
 	private Animal animal;
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_cliente")
+    @JsonBackReference
 	private Usuario cliente;
 	
 	@ManyToOne(fetch = FetchType.EAGER)

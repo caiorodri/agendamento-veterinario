@@ -126,6 +126,12 @@ public class UsuarioService {
 
             throw e;
 
+        } catch (Exception e){
+
+            logger.error("[salvar] - Erro ao salvar usuário: {}", e.getMessage());
+
+            throw e;
+
         }
 
     }
@@ -151,7 +157,7 @@ public class UsuarioService {
 
         try {
 
-            validarUsuario(usuario, false); // false para 'isNovoUsuario'
+            validarUsuario(usuario, false);
 
             Usuario usuarioAtualizado = usuarioRepository.save(usuario);
 
@@ -164,6 +170,13 @@ public class UsuarioService {
             logger.error("[atualizar] - Erro de validação ao atualizar usuário id = {}: {}", usuario.getId(), e.getMessage());
 
             throw e;
+
+        } catch (Exception e){
+
+            logger.error("[atualizar] - Erro ao atualizar usuário id = {}: {}", usuario.getId(), e.getMessage());
+
+            throw e;
+
         }
     }
 
@@ -214,7 +227,7 @@ public class UsuarioService {
             throw new IllegalArgumentException("Email do usuário é obrigatório.");
         }
 
-        if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
+        if (isNovoUsuario && (usuario.getSenha() == null || usuario.getSenha().isBlank())) {
 
             throw new IllegalArgumentException("Senha do usuário é obrigatória.");
 

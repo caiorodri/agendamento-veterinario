@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.CollectionTable;
@@ -65,9 +66,11 @@ public class Usuario {
 	private Perfil perfil;
 	
 	@OneToMany(mappedBy = "dono", fetch = FetchType.LAZY)
+    @JsonManagedReference
 	private List<Animal> animais;
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
+    @JsonManagedReference
 	private List<Agendamento> agendamentos;
 	
 	@ElementCollection
