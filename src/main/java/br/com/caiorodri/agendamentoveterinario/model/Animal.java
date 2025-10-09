@@ -47,6 +47,7 @@ public class Animal {
 	
 	@OneToMany(mappedBy = "animal", fetch = FetchType.LAZY)
     @JsonManagedReference
+	@OrderBy("dataAgendamentoInicio DESC")
 	private List<Agendamento> agendamentos;
 	
 	@ManyToOne(fetch = FetchType.EAGER)
