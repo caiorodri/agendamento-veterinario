@@ -71,6 +71,7 @@ public class Usuario {
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
     @JsonManagedReference
+	@OrderBy("dataAgendamentoInicio DESC")
 	private List<Agendamento> agendamentos;
 	
 	@ElementCollection
