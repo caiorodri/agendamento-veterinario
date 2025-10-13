@@ -36,3 +36,6 @@ spring:
 springdoc:
     security:
       enabled: false
+
+endereco: ${ENDERECO}
+contato: ${CONTATO}
