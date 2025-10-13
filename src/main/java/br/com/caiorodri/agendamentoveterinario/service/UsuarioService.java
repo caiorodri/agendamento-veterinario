@@ -29,8 +29,8 @@ public class UsuarioService {
     @Autowired
     private StatusRepository statusRepository;
 
-    @Autowired
-    private EmailSender emailSender;
+    // @Autowired
+    // private EmailSender emailSender;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -143,7 +143,7 @@ public class UsuarioService {
 
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
+            // emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
             logger.info("[salvar] - Usuário salvo com id = {}", usuarioSalvo.getId());
 
@@ -326,7 +326,7 @@ public class UsuarioService {
 
         }
 
-        emailSender.enviarCodigoEmail(email);
+        // emailSender.enviarCodigoEmail(email);
 
         return true;
 
@@ -394,7 +394,7 @@ public class UsuarioService {
 
             if(usuario.isReceberEmail()) {
 
-                emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+                // emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
 
             }
 
