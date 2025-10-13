@@ -24,7 +24,7 @@ public class Raca {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Integer id;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_especie")
 	private Especie especie;
 	
