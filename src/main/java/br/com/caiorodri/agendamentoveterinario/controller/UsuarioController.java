@@ -1,7 +1,9 @@
 package br.com.caiorodri.agendamentoveterinario.controller;
 
+import br.com.caiorodri.agendamentoveterinario.dto.LoginResponseDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.StatusDTO;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.security.TokenService;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +46,12 @@ public class UsuarioController {
 
     @Autowired
     private Mapper mapper;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenService tokenService;
 
     final static Logger logger = LoggerFactory.getLogger(UsuarioController.class);
 
@@ -121,17 +131,22 @@ public class UsuarioController {
             }
     )
     @PostMapping("/autenticar")
-    public ResponseEntity<UsuarioDTO> autenticar(@RequestBody UsuarioRequestDTO usuarioRequest) {
+    public ResponseEntity<LoginResponseDTO> autenticar(@RequestBody UsuarioRequestDTO usuarioRequest) {
 
         logger.info("[autenticar] - Início");
 
-        Usuario usuario = usuarioService.autenticar(usuarioRequest);
+        var usernamePassword = new UsernamePasswordAuthenticationToken(usuarioRequest.getEmail(), usuarioRequest.getSenha());
+        var auth = this.authenticationManager.authenticate(usernamePassword);
 
-        UsuarioDTO usuarioDto = mapper.usuarioToDto(usuario);
+        var usuario = (Usuario) auth.getPrincipal();
+
+        var token = tokenService.generateToken(usuario);
+
+        var usuarioDto = mapper.usuarioToDto(usuario);
 
         logger.info("[autenticar] - Fim");
 
-        return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
+        return new ResponseEntity<>(new LoginResponseDTO(token, usuarioDto), HttpStatus.OK);
     }
 
     @Operation(
