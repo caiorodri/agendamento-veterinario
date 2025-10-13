@@ -69,6 +69,7 @@ CREATE TABLE usuario (
     id_status INT NOT NULL,
     id_perfil INT NOT NULL,
     email_realizar_consulta_recebido BOOLEAN DEFAULT FALSE,
+    receber_email BOOLEAN DEFAULT FALSE,
     CONSTRAINT usuario_estado_fk FOREIGN KEY (sigla_estado) REFERENCES estado(sigla),
     CONSTRAINT usuario_status_fk FOREIGN KEY (id_status) REFERENCES usuario_status(id),
     CONSTRAINT usuario_perfil_fk FOREIGN KEY (id_perfil) REFERENCES perfil(id)
@@ -169,8 +170,8 @@ CREATE TABLE animal_sexo (
 );
 
 INSERT INTO animal_sexo (nome) VALUES
-('Masculino'),
-('Feminino'),
+('Macho'),
+('Femea'),
 ('Desconhecido');
 
 CREATE TABLE IF NOT EXISTS animal (
