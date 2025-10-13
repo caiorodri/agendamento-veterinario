@@ -1,5 +1,11 @@
 package br.com.caiorodri.agendamentoveterinario.controller;
 
+import br.com.caiorodri.agendamentoveterinario.dto.EspecieDTO;
+import br.com.caiorodri.agendamentoveterinario.dto.RacaDTO;
+import br.com.caiorodri.agendamentoveterinario.dto.SexoDTO;
+import br.com.caiorodri.agendamentoveterinario.model.Especie;
+import br.com.caiorodri.agendamentoveterinario.model.Raca;
+import br.com.caiorodri.agendamentoveterinario.model.Sexo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +24,8 @@ import br.com.caiorodri.agendamentoveterinario.service.AnimalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
+import java.util.List;
 
 
 @RestController
@@ -166,4 +174,68 @@ public class AnimalController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @Operation(
+            summary = "Listar todas as espécies",
+            description = "Retorna uma lista de todas as espécies de animais disponíveis para cadastro."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Espécies listadas com sucesso")
+    })
+    @GetMapping("/especies")
+    public ResponseEntity<List<EspecieDTO>> listarEspecies() {
+
+        logger.info("[listarEspecies] - Início");
+
+        List<Especie> especies = animalService.listarEspecies();
+
+        List<EspecieDTO> especiesDTO = mapper.especieListToDtoList(especies);
+
+        logger.info("[listarEspecies] - Fim");
+
+        return new ResponseEntity<>(especiesDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar raças por espécie",
+            description = "Retorna uma lista de raças com base no ID da espécie informada."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Raças listadas com sucesso")
+    })
+    @GetMapping("/racas/especie/{idEspecie}")
+    public ResponseEntity<List<RacaDTO>> listarRacasPorEspecie(@PathVariable Integer idEspecie) {
+
+        logger.info("[listarRacasPorEspecie] - Início");
+
+        List<Raca> racas = animalService.listarRacasByIdEspecie(idEspecie);
+
+        List<RacaDTO> racasDTO = mapper.racaListToDtoList(racas);
+
+        logger.info("[listarRacasPorEspecie] - Fim");
+
+        return new ResponseEntity<>(racasDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar todos os sexos",
+            description = "Retorna uma lista de todos os sexos de animais disponíveis para cadastro."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sexos listados com sucesso")
+    })
+    @GetMapping("/sexos")
+    public ResponseEntity<List<SexoDTO>> listarSexos() {
+
+        logger.info("[listarSexos] - Início");
+
+        List<Sexo> sexos = animalService.listarSexos();
+
+        List<SexoDTO> sexosDTO = mapper.sexoListToDtoList(sexos);
+
+        logger.info("[listarSexos] - Fim");
+
+        return new ResponseEntity<>(sexosDTO, HttpStatus.OK);
+    }
+
 }

@@ -1,9 +1,7 @@
 package br.com.caiorodri.agendamentoveterinario.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,12 +10,15 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Usuario {
+public class Usuario implements UserDetails {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,11 +56,11 @@ public class Usuario {
 	private Perfil perfil;
 	
 	@OneToMany(mappedBy = "dono", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("usuario-animal")
 	private List<Animal> animais;
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("cliente-agendamento")
 	@OrderBy("dataAgendamentoInicio DESC")
 	private List<Agendamento> agendamentos;
 	
@@ -73,7 +74,10 @@ public class Usuario {
 
 	@Column(name = "email_realizar_consulta_recebido")
 	private boolean emailRealizarConsultaRecebido;
-	
+
+    @Column(name = "receber_email")
+    private boolean receberEmail;
+
 	public Usuario() {
 		
 		this.endereco = new Endereco();
@@ -88,5 +92,45 @@ public class Usuario {
 		this.id = id;
 		
 	}
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.perfil != null) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.perfil.getNome().toUpperCase()));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.status != null && this.status.getNome().equalsIgnoreCase("Ativo");
+    }
+
+
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.status != null && this.status.getNome().equalsIgnoreCase("Ativo");
+    }
 	
 }

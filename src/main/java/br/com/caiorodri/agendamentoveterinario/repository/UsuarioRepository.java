@@ -39,8 +39,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 	
 	@Query("SELECT u FROM Usuario u " +
 		   "LEFT JOIN FETCH u.status s " +
-		   "WHERE u.perfil.id = 1")
-	public List<Usuario> findClientes();	
+		   "WHERE u.perfil.id = 1 " +
+           "AND s.id = 1")
+	public List<Usuario> findClientesAtivos();
 	
 	@Query("SELECT u FROM Usuario u " +
 			   "LEFT JOIN FETCH u.status s " +

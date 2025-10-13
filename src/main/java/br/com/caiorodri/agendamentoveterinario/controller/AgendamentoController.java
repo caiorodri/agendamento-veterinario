@@ -1,5 +1,10 @@
 package br.com.caiorodri.agendamentoveterinario.controller;
 
+import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoStatusDTO;
+import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoTipoDTO;
+import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
+import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +30,8 @@ import br.com.caiorodri.agendamentoveterinario.model.Agendamento;
 import br.com.caiorodri.agendamentoveterinario.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+import java.util.List;
 
 
 @RestController
@@ -209,6 +216,50 @@ public class AgendamentoController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
+    }
+
+
+    @Operation(
+            summary = "Listar todas os status",
+            description = "Retorna uma lista de todos os status de agendamento."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status listados com sucesso")
+    })
+    @GetMapping("/status")
+    public ResponseEntity<List<AgendamentoStatusDTO>> listarAgendamentoStatus() {
+
+        logger.info("[listarAgendamentoStatus] - Início");
+
+        List<AgendamentoStatus> status = agendamentoService.listarAgendamentoStatus();
+
+        List<AgendamentoStatusDTO> statusDTO = mapper.agendamentoStatusListToDtoList(status);
+
+        logger.info("[listarAgendamentoStatus] - Fim");
+
+        return new ResponseEntity<>(statusDTO, HttpStatus.OK);
+    }
+
+
+    @Operation(
+            summary = "Listar todas os tipos de agendamentos",
+            description = "Retorna uma lista de todos os tipos de agendamento."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tipos listados com sucesso")
+    })
+    @GetMapping("/tipos")
+    public ResponseEntity<List<AgendamentoTipoDTO>> listarAgendamentoTipo() {
+
+        logger.info("[listarAgendamentoTipo] - Início");
+
+        List<AgendamentoTipo> tipos = agendamentoService.listarAgendamentoTipo();
+
+        List<AgendamentoTipoDTO> tiposDTO = mapper.agendamentoTipoListToDtoList(tipos);
+
+        logger.info("[listarAgendamentoTipo] - Fim");
+
+        return new ResponseEntity<>(tiposDTO, HttpStatus.OK);
     }
 
 }

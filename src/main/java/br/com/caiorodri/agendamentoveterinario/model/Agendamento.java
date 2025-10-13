@@ -29,22 +29,20 @@ public class Agendamento {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_animal")
-    @JsonBackReference
+    @JsonBackReference("animal-agendamento")
 	private Animal animal;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_cliente")
-    @JsonBackReference
+    @JsonBackReference("cliente-agendamento")
 	private Usuario cliente;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_veterinario")
-    @JsonBackReference
 	private Usuario veterinario;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_recepcionista")
-    @JsonBackReference
 	private Usuario recepcionista;
 
 	@OneToOne(fetch = FetchType.EAGER)

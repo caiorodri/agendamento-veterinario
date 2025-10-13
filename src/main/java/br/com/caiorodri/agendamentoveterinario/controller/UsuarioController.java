@@ -1,5 +1,8 @@
 package br.com.caiorodri.agendamentoveterinario.controller;
 
+import br.com.caiorodri.agendamentoveterinario.dto.StatusDTO;
+import br.com.caiorodri.agendamentoveterinario.model.Status;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +30,8 @@ import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 import br.com.caiorodri.agendamentoveterinario.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -191,6 +197,97 @@ public class UsuarioController {
         logger.info("[deletar] - Fim");
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(
+            summary = "Listar todas os status",
+            description = "Retorna uma lista de todos os status do usuário."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status listados com sucesso")
+    })
+    @GetMapping("/status")
+    public ResponseEntity<List<StatusDTO>> listarStatus() {
+
+        logger.info("[listarStatus] - Início");
+
+        List<Status> status = usuarioService.listarStatus();
+
+        List<StatusDTO> statusDTO = mapper.statusListToDtoList(status);
+
+        logger.info("[listarStatus] - Fim");
+
+        return new ResponseEntity<>(statusDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Enviar código de recuperação por e-mail",
+            description = "Inicia o processo de recuperação de senha. Se o e-mail informado existir na base de dados, um código de recuperação será enviado para ele."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Solicitação processada. Se o e-mail existir, o código foi enviado."),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado com o e-mail fornecido.")
+    })
+    @GetMapping("/recuperar-senha/{email}")
+    public ResponseEntity<Void> enviarCodigoEmail(@PathVariable String email) {
+
+        logger.info("[enviarCodigoEmail] - Início do processo de recuperação de senha para o e-mail: {}", email);
+
+        boolean emailEnviado = usuarioService.enviarCodigoEmail(email);
+
+        if (emailEnviado) {
+            logger.info("[enviarCodigoEmail] - Fim. E-mail de recuperação enviado para {}", email);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            logger.warn("[enviarCodigoEmail] - Fim. Tentativa de recuperação para um e-mail não cadastrado: {}", email);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Operation(
+            summary = "Enviar e-mail de campanha de vacinação",
+            description = "Dispara o envio de um e-mail informativo sobre a campanha de vacinação para todos os clientes ativos que optaram por receber e-mails. (Apenas Administradores e Recepcionistas)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Processo de envio de e-mails iniciado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação")
+    })
+    @PostMapping("/enviar-campanha-vacinacao")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<Void> enviarEmailCampanhaVacinacao() {
+
+        logger.info("[enviarEmailCampanhaVacinacao] - Início");
+
+        usuarioService.enviarEmailClientesCampanhaVacinacao();
+
+        logger.info("[enviarEmailCampanhaVacinacao] - Solicitação de envio recebida. O processo ocorrerá em segundo plano.");
+
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    }
+
+    @Operation(
+            summary = "Validar código de recuperação",
+            description = "Verifica se o código de recuperação fornecido para um usuário específico é válido. Este é um passo do fluxo de redefinição de senha."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Código válido."),
+            @ApiResponse(responseCode = "400", description = "Código inválido ou usuário não encontrado.")
+    })
+    @GetMapping("/{id}/validar-codigo/{codigo}")
+    public ResponseEntity<Void> validarCodigoRecuperacao(@PathVariable Long id, @PathVariable String codigo) {
+
+        logger.info("[validarCodigoRecuperacao] - Início da validação de código para o usuário ID: {}", id);
+
+        boolean isCodigoValido = usuarioService.validarCodigo(id, codigo);
+
+        if (isCodigoValido) {
+            logger.info("[validarCodigoRecuperacao] - Código válido para o usuário ID: {}", id);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            logger.warn("[validarCodigoRecuperacao] - Código inválido ou não encontrado para o usuário ID: {}", id);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

@@ -1,5 +1,10 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.Especie;
+import br.com.caiorodri.agendamentoveterinario.model.Raca;
+import br.com.caiorodri.agendamentoveterinario.model.Sexo;
+import br.com.caiorodri.agendamentoveterinario.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.caiorodri.agendamentoveterinario.model.Animal;
-import br.com.caiorodri.agendamentoveterinario.repository.AnimalRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.RacaRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.SexoRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+
+import java.util.List;
 
 @Service
 public class AnimalService {
@@ -27,7 +30,13 @@ public class AnimalService {
     private RacaRepository racaRepository;
 
     @Autowired
+    private EspecieRepository especieRepository;
+
+    @Autowired
     private SexoRepository sexoRepository;
+
+    @Autowired
+    private EmailSender emailSender;
 
     final static Logger logger = LoggerFactory.getLogger(AnimalService.class);
 
@@ -107,6 +116,8 @@ public class AnimalService {
 
             Animal animalSalvo = animalRepository.save(animal);
 
+            emailSender.enviarInformacaoCadastroAnimalEmail(animal, false);
+
             logger.info("[salvar] - Animal salvo com id = {}", animalSalvo.getId());
 
             return animalSalvo;
@@ -145,6 +156,8 @@ public class AnimalService {
             validarAnimal(animal);
 
             Animal animalAtualizado = animalRepository.save(animal);
+
+            emailSender.enviarInformacaoCadastroAnimalEmail(animal, true);
 
             logger.info("[atualizar] - Animal atualizado com sucesso id = {}", animalAtualizado.getId());
 
@@ -216,4 +229,55 @@ public class AnimalService {
             throw new EntityNotFoundException("Sexo com id " + animal.getSexo().getId() + " não foi encontrado.");
         }
     }
+
+    /**
+     * Lista todos os sexos dos animais
+     *
+     * @return List com os sexos dos animais.
+     */
+    public List<Sexo> listarSexos() {
+
+        logger.info("[listarSexos] - Listando sexo dos animais");
+
+        List<Sexo> sexos = sexoRepository.findAll();
+
+        logger.info("[listarSexos] - Encontrados {} sexos", sexos.size());
+
+        return sexos;
+    }
+
+    /**
+     * Lista as raças da especie com determinado ID
+     *
+     * @param idEspecie ID da especie para buscar as raças.
+     *
+     * @return List com as raças dos animais.
+     */
+    public List<Raca> listarRacasByIdEspecie(Integer idEspecie) {
+
+        logger.info("[listarRacas] - Listando raças da especie com id = {}", idEspecie);
+
+        List<Raca> racas = racaRepository.findByEspecie(idEspecie);
+
+        logger.info("[listarRacas] - Encontrados {} raças", racas.size());
+
+        return racas;
+    }
+
+    /**
+     * Lista todos as especies dos animais
+     *
+     * @return List com as especies dos animais.
+     */
+    public List<Especie> listarEspecies() {
+
+        logger.info("[listarEspecies] - Listando sexo dos animais");
+
+        List<Especie> especies = especieRepository.findAll();
+
+        logger.info("[listarEspecies] - Encontrados {} especies", especies.size());
+
+        return especies;
+    }
+
 }

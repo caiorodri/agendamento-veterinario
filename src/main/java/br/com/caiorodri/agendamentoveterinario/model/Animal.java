@@ -46,13 +46,13 @@ public class Animal {
 	private float altura;
 	
 	@OneToMany(mappedBy = "animal", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("animal-agendamento")
 	@OrderBy("dataAgendamentoInicio DESC")
 	private List<Agendamento> agendamentos;
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_dono")
-    @JsonBackReference
+    @JsonBackReference("usuario-animal")
 	private Usuario dono;
 	
 	public Animal(Long id) {

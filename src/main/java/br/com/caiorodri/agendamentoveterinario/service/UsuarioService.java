@@ -1,12 +1,18 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.caiorodri.agendamentoveterinario.dto.UsuarioRequestDTO;
@@ -19,6 +25,15 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private StatusRepository statusRepository;
+
+    @Autowired
+    private EmailSender emailSender;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     final static Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
@@ -92,11 +107,20 @@ public class UsuarioService {
 
         logger.info("[autenticar] - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
 
-        Usuario usuario = usuarioRepository.findByEmailAndSenha(usuarioRequest.getEmail(), usuarioRequest.getSenha()).orElseThrow(() -> new SecurityException("Credenciais inválidas"));
+        Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
+                .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
 
-        logger.info("[autenticar] - Usuário autenticado com sucesso: {}", usuario.getEmail());
+        if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
 
-        return usuario;
+            logger.info("[autenticar] - Usuário autenticado com sucesso: {}", usuario.getEmail());
+            return usuario;
+
+        } else {
+
+            throw new SecurityException("Credenciais inválidas");
+
+        }
+
     }
 
     /**
@@ -114,7 +138,12 @@ public class UsuarioService {
 
             validarUsuario(usuario, true);
 
+            String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
+            usuario.setSenha(senhaCriptografada);
+
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
             logger.info("[salvar] - Usuário salvo com id = {}", usuarioSalvo.getId());
 
@@ -148,18 +177,28 @@ public class UsuarioService {
 
         logger.info("[atualizar] - Atualizando usuário id = {}", usuario.getId());
 
-        if (usuario.getId() == null || !usuarioRepository.existsById(usuario.getId())) {
-
-            logger.error("[atualizar] - Usuário não encontrado para id = {}", usuario.getId());
-
-            throw new EntityNotFoundException("Usuário não encontrado para atualização.");
-        }
+        Usuario usuarioExistente = usuarioRepository.findById(usuario.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para atualização."));
 
         try {
 
             validarUsuario(usuario, false);
 
-            Usuario usuarioAtualizado = usuarioRepository.save(usuario);
+            if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
+                String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
+                usuarioExistente.setSenha(senhaCriptografada);
+            }
+
+            usuarioExistente.setNome(usuario.getNome());
+            usuarioExistente.setEmail(usuario.getEmail());
+            usuarioExistente.setDataNascimento(usuario.getDataNascimento());
+            usuarioExistente.setEndereco(usuario.getEndereco());
+            usuarioExistente.setTelefones(usuario.getTelefones());
+            usuarioExistente.setStatus(usuario.getStatus());
+            usuarioExistente.setPerfil(usuario.getPerfil());
+            usuarioExistente.setReceberEmail(usuario.isReceberEmail());
+
+            Usuario usuarioAtualizado = usuarioRepository.save(usuarioExistente);
 
             logger.info("[atualizar] - Usuário atualizado com sucesso id = {}", usuarioAtualizado.getId());
 
@@ -250,6 +289,115 @@ public class UsuarioService {
                 }
 
             }
+
+        }
+
+    }
+
+
+    /**
+     * Lista todos as status do usuário
+     *
+     * @return List com os status do usuário.
+     */
+    public List<Status> listarStatus() {
+
+        logger.info("[listarStatus] - Listando sexo dos animais");
+
+        List<Status> listaStatus = statusRepository.findAll();
+
+        logger.info("[listarStatus] - Encontrados {} status", listaStatus.size());
+
+        return listaStatus;
+    }
+
+    /**
+     * Envia código de recuperação para o usuário por email
+     *
+     * @return Resultado do envio.
+     */
+    public boolean enviarCodigoEmail(String email){
+
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+
+        if(usuario == null){
+
+            return false;
+
+        }
+
+        emailSender.enviarCodigoEmail(email);
+
+        return true;
+
+    }
+
+    /**
+     * Valida o código de recuperação do usuário, checando também se não expirou.
+     *
+     * @param idUsuario Id do usuário
+     * @param codigo Código a ser validado
+     *
+     * @return true se o código for válido e não estiver expirado, caso contrário false.
+     */
+    public boolean validarCodigo(Long idUsuario, String codigo) {
+
+        logger.info("[validarCodigo] - Validando código para o usuário ID: {}", idUsuario);
+
+        Optional<Usuario> usuarioOptional = usuarioRepository.findById(idUsuario);
+
+        if (usuarioOptional.isEmpty()) {
+            logger.warn("[validarCodigo] - Tentativa de validação para usuário inexistente. ID: {}", idUsuario);
+            return false;
+        }
+
+        Usuario usuario = usuarioOptional.get();
+
+        if(usuario.getExpiracaoCodigo() == null){
+
+            logger.warn("[validarCodigo] - Código de recuperação expirou para o usuário ID: {}", idUsuario);
+            return false;
+
+        }
+
+        boolean codigoCorreto = codigo != null && codigo.equals(usuario.getCodigoRecuperacao());
+        boolean naoExpirou = usuario.getExpiracaoCodigo() != null && LocalDateTime.now().isBefore(usuario.getExpiracaoCodigo());
+
+        if (codigoCorreto && naoExpirou) {
+
+            usuario.setCodigoRecuperacao(null);
+            usuario.setExpiracaoCodigo(null);
+            usuarioRepository.save(usuario);
+
+            logger.info("[validarCodigo] - Código validado com sucesso para o usuário ID: {}", idUsuario);
+            return true;
+        } else {
+            if (!codigoCorreto) {
+                logger.warn("[validarCodigo] - Código fornecido é inválido para o usuário ID: {}", idUsuario);
+            }
+            if (!naoExpirou) {
+                logger.warn("[validarCodigo] - Código de recuperação expirou para o usuário ID: {}", idUsuario);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Envia um aviso de campanha de vacinação para cada usuário por email
+     *
+     */
+    public void enviarEmailClientesCampanhaVacinacao() {
+
+        List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
+
+        for(Usuario usuario : usuarios) {
+
+            if(usuario.isReceberEmail()) {
+
+                emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+
+            }
+
 
         }
 

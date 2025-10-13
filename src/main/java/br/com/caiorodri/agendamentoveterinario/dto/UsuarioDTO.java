@@ -35,6 +35,8 @@ public class UsuarioDTO {
 
 	private boolean emailRealizarConsultaRecebido;
 
+    private boolean receberEmail;
+
     private List<AgendamentoDTO> agendamentos;
 
     private List<AnimalDTO> animais;

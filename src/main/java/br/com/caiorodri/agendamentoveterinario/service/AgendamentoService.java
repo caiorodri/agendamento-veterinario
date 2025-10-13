@@ -2,6 +2,11 @@ package br.com.caiorodri.agendamentoveterinario.service;
 
 import java.util.List;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
+import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
+import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.caiorodri.agendamentoveterinario.model.Agendamento;
-import br.com.caiorodri.agendamentoveterinario.repository.AgendamentoRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.AnimalRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -23,9 +25,18 @@ public class AgendamentoService {
 	
 	@Autowired
 	private AnimalRepository animalRepository;
-	
+
+    @Autowired
+    private AgendamentoStatusRepository agendamentoStatusRepository;
+
+    @Autowired
+    private AgendamentoTipoRepository agendamentoTipoRepository;
+
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private EmailSender emailSender;
 
 	final static Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
 	
@@ -136,6 +147,8 @@ public class AgendamentoService {
 			
 			Agendamento agendamentoSalvo = agendamentoRepository.save(agendamento);
 
+            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
+
             logger.info("[salvar] - Agendamento salvo com id = {}", agendamentoSalvo.getId());
 			
             return agendamentoSalvo;
@@ -182,7 +195,9 @@ public class AgendamentoService {
             validarAgendamento(agendamento);
             
         	Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
-            
+
+            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
+
         	logger.info("[atualizar] - Agendamento atualizado com sucesso id = {}", agendamentoAtualizado.getId());
         
             return agendamentoAtualizado;
@@ -283,10 +298,41 @@ public class AgendamentoService {
     			}
     			
     		}
-        	
-        	
+            
         }
     	
+    }
+
+    /**
+     * Lista todos as status dos agendamentos
+     *
+     * @return List com os status dos agendamentos.
+     */
+    public List<AgendamentoStatus> listarAgendamentoStatus() {
+
+        logger.info("[listarAgendamentoStatus] - Listando status dos agendamentos");
+
+        List<AgendamentoStatus> listaStatus = agendamentoStatusRepository.findAll();
+
+        logger.info("[listarAgendamentoStatus] - Encontrados {} status", listaStatus.size());
+
+        return listaStatus;
+    }
+
+    /**
+     * Lista todos os tipos dos agendamentos
+     *
+     * @return List com os tipos dos agendamentos.
+     */
+    public List<AgendamentoTipo> listarAgendamentoTipo() {
+
+        logger.info("[listarAgendamentoTipo] - Listando tipos dos agendamentos");
+
+        List<AgendamentoTipo> tipos = agendamentoTipoRepository.findAll();
+
+        logger.info("[listarAgendamentoTipo] - Encontrados {} tipos", tipos.size());
+
+        return tipos;
     }
 	
 }
