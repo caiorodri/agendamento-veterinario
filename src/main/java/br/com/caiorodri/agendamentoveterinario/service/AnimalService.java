@@ -35,8 +35,8 @@ public class AnimalService {
     @Autowired
     private SexoRepository sexoRepository;
 
-    @Autowired
-    private EmailSender emailSender;
+    // @Autowired
+    // private EmailSender emailSender;
 
     final static Logger logger = LoggerFactory.getLogger(AnimalService.class);
 
@@ -116,7 +116,7 @@ public class AnimalService {
 
             Animal animalSalvo = animalRepository.save(animal);
 
-            emailSender.enviarInformacaoCadastroAnimalEmail(animal, false);
+            // emailSender.enviarInformacaoCadastroAnimalEmail(animal, false);
 
             logger.info("[salvar] - Animal salvo com id = {}", animalSalvo.getId());
 
@@ -157,7 +157,7 @@ public class AnimalService {
 
             Animal animalAtualizado = animalRepository.save(animal);
 
-            emailSender.enviarInformacaoCadastroAnimalEmail(animal, true);
+            // emailSender.enviarInformacaoCadastroAnimalEmail(animal, true);
 
             logger.info("[atualizar] - Animal atualizado com sucesso id = {}", animalAtualizado.getId());
 
