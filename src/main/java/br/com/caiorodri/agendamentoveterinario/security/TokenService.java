@@ -5,6 +5,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,19 @@ public class TokenService {
 
     @Value("${jwt.expiration}")
     private long  expiration;
+
+    @PostConstruct
+    public void verificarChaveSecreta() {
+        System.out.println("==========================================================");
+        if (secret == null || secret.isBlank() || secret.equals("${JWT_SECRET}")) {
+            System.out.println("### ALERTA DE SEGURANÇA: A chave secreta JWT NÃO foi carregada corretamente! ###");
+            System.out.println("### Valor lido: [" + secret + "] ###");
+        } else {
+            System.out.println(">>> Chave secreta JWT carregada com sucesso.");
+        }
+        System.out.println("==========================================================");
+    }
+
 
     public String generateToken(Usuario usuario) {
         try {
