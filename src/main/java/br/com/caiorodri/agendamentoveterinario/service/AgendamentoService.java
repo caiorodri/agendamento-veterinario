@@ -35,8 +35,8 @@ public class AgendamentoService {
 	@Autowired
 	private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private EmailSender emailSender;
+    // @Autowired
+    // private EmailSender emailSender;
 
 	final static Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
 	
@@ -147,7 +147,7 @@ public class AgendamentoService {
 			
 			Agendamento agendamentoSalvo = agendamentoRepository.save(agendamento);
 
-            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
+            //emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
 
             logger.info("[salvar] - Agendamento salvo com id = {}", agendamentoSalvo.getId());
 			
@@ -196,7 +196,7 @@ public class AgendamentoService {
             
         	Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
 
-            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
+            // emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
 
         	logger.info("[atualizar] - Agendamento atualizado com sucesso id = {}", agendamentoAtualizado.getId());
         

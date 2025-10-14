@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 
 import br.com.caiorodri.agendamentoveterinario.dto.UsuarioDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.UsuarioRequestDTO;
@@ -303,6 +305,19 @@ public class UsuarioController {
             logger.warn("[validarCodigoRecuperacao] - Código inválido ou não encontrado para o usuário ID: {}", id);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @Operation(
+            summary = "Recuperar usuário logado",
+            description = "Retorna o usuário que está logado no momento da consulta"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário retornado com sucesso.")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioDTO> getUsuarioLogado(@AuthenticationPrincipal Usuario usuario) {
+        var usuarioDto = mapper.usuarioToDto(usuario);
+        return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
     }
 
 }
