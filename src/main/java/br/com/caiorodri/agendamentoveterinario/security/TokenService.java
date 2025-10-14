@@ -57,6 +57,10 @@ public class TokenService {
                     .verify(token)
                     .getSubject();
         } catch (JWTVerificationException exception) {
+            System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.err.println("### FALHA NA VALIDAÇÃO DO TOKEN JWT ###");
+            System.err.println("### Causa: " + exception.getMessage());
+            System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return "";
         }
     }
