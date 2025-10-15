@@ -316,7 +316,13 @@ public class UsuarioController {
     })
     @GetMapping("/me")
     public ResponseEntity<UsuarioDTO> getUsuarioLogado(@AuthenticationPrincipal Usuario usuario) {
+
+        logger.info("[getUsuarioLogado] - Início");
+
         var usuarioDto = mapper.usuarioToDto(usuario);
+
+        logger.info("[getUsuarioLogado] - Fim");
+
         return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
     }
 

@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
 import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
 import org.slf4j.Logger;
@@ -46,13 +45,22 @@ public class UsuarioService {
      */
     public Usuario recuperar(Long id) {
 
-        logger.info("[recuperar] - Buscando usuário com id = {}", id);
+        logger.info("[recuperar] - Inicio - Buscando usuário com id = {}", id);
 
-        Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário com id " + id + " não encontrado"));
+        try {
 
-        logger.info("[recuperar] - Usuário com id = {} encontrado", id);
+            Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário com id " + id + " não encontrado"));
 
-        return usuario;
+            logger.info("[recuperar] - Fim - Usuário com id = {} encontrado", id);
+
+            return usuario;
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[recuperar] - Fim - Erro: {}", e.getMessage());
+            throw e;
+
+        }
     }
 
     /**
@@ -60,16 +68,26 @@ public class UsuarioService {
      *
      * @param pageable Dados de paginação.
      * @return Page com usuários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os usuários.
      */
     public Page<Usuario> listar(Pageable pageable) {
 
-        logger.info("[listar] - Listando usuários página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+        logger.info("[listar] - Inicio - Listando usuários: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<Usuario> usuarios = usuarioRepository.findAll(pageable);
+        try {
 
-        logger.info("[listar] - Encontrados {} usuários", usuarios.getTotalElements());
+            Page<Usuario> usuarios = usuarioRepository.findAll(pageable);
 
-        return usuarios;
+            logger.info("[listar] - Fim - Encontrados {} usuários no total.", usuarios.getTotalElements());
+
+            return usuarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listar] - Fim - Erro inesperado ao listar usuários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar usuários", e);
+
+        }
     }
 
     /**
@@ -81,19 +99,23 @@ public class UsuarioService {
      */
     public Usuario recuperarByEmail(String email) {
 
-        logger.info("[recuperarByEmail] - Buscando usuário com email = {}", email);
+        logger.info("[recuperarByEmail] - Inicio - Buscando usuário com email = {}", email);
 
-        Optional<Usuario> usuarioOptional = usuarioRepository.findByEmail(email);
+        try {
 
-        if (usuarioOptional.isEmpty()) {
+            Usuario usuario = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário com email " + email + " não encontrado"));
 
-            throw new EntityNotFoundException("Usuário com email " + email + " não encontrado");
+            logger.info("[recuperarByEmail] - Fim - Usuário com email = {} encontrado", email);
+
+            return usuario;
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[recuperarByEmail] - Fim - Erro: {}", e.getMessage());
+            throw e;
 
         }
-
-        logger.info("[recuperarByEmail] - Usuário com email = {} encontrado", email);
-
-        return usuarioOptional.get();
     }
 
     /**
@@ -102,25 +124,39 @@ public class UsuarioService {
      * @param usuarioRequest DTO com credenciais de login.
      * @return Usuário autenticado.
      * @throws SecurityException caso as credenciais sejam inválidas.
+     * @throws RuntimeException se ocorrer um erro inesperado.
      */
     public Usuario autenticar(UsuarioRequestDTO usuarioRequest) {
 
-        logger.info("[autenticar] - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
+        logger.info("[autenticar] - Inicio - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
 
-        Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
-                .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
+        try {
 
-        if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
+            Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
+                    .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
 
-            logger.info("[autenticar] - Usuário autenticado com sucesso: {}", usuario.getEmail());
-            return usuario;
+            if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
 
-        } else {
+                logger.info("[autenticar] - Fim - Usuário autenticado com sucesso: {}", usuario.getEmail());
+                return usuario;
 
-            throw new SecurityException("Credenciais inválidas");
+            } else {
+
+                throw new SecurityException("Credenciais inválidas");
+
+            }
+
+        } catch (SecurityException e) {
+
+            logger.warn("[autenticar] - Fim - Falha na autenticação para o email {}: {}", usuarioRequest.getEmail(), e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+
+            logger.error("[autenticar] - Fim - Erro inesperado ao autenticar {}: {}", usuarioRequest.getEmail(), e.getMessage(), e);
+            throw new RuntimeException("Erro no processo de autenticação", e);
 
         }
-
     }
 
     /**
@@ -129,10 +165,11 @@ public class UsuarioService {
      * @param usuario Objeto usuário a ser salvo.
      * @return Usuário salvo.
      * @throws IllegalArgumentException se dados obrigatórios estiverem ausentes ou inválidos.
+     * @throws RuntimeException se ocorrer um erro inesperado ao salvar.
      */
     public Usuario salvar(Usuario usuario) {
 
-        logger.info("[salvar] - Iniciando salvamento de novo usuário");
+        logger.info("[salvar] - Inicio - Tentativa de salvar um novo usuário.");
 
         try {
 
@@ -145,24 +182,21 @@ public class UsuarioService {
 
             // emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
-            logger.info("[salvar] - Usuário salvo com id = {}", usuarioSalvo.getId());
+            logger.info("[salvar] - Fim - Usuário salvo com sucesso com o id = {}", usuarioSalvo.getId());
 
             return usuarioSalvo;
 
         } catch (IllegalArgumentException e) {
 
-            logger.error("[salvar] - Erro de validação ao salvar usuário: {}", e.getMessage());
-
+            logger.error("[salvar] - Fim - Erro de validação ao salvar usuário: {}", e.getMessage());
             throw e;
 
         } catch (Exception e){
 
-            logger.error("[salvar] - Erro ao salvar usuário: {}", e.getMessage());
-
-            throw e;
+            logger.error("[salvar] - Fim - Erro inesperado ao salvar usuário: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar usuário", e);
 
         }
-
     }
 
     /**
@@ -172,21 +206,24 @@ public class UsuarioService {
      * @return Usuário atualizado.
      * @throws EntityNotFoundException se o usuário não existir.
      * @throws IllegalArgumentException se os dados para atualização forem inválidos.
+     * @throws RuntimeException se ocorrer um erro inesperado ao atualizar.
      */
     public Usuario atualizar(Usuario usuario) {
 
-        logger.info("[atualizar] - Atualizando usuário id = {}", usuario.getId());
-
-        Usuario usuarioExistente = usuarioRepository.findById(usuario.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para atualização."));
+        logger.info("[atualizar] - Inicio - Tentativa de atualizar o usuário com id = {}", usuario.getId());
 
         try {
+
+            Usuario usuarioExistente = usuarioRepository.findById(usuario.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário com id " + usuario.getId() + " não encontrado para atualização."));
 
             validarUsuario(usuario, false);
 
             if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
+
                 String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
                 usuarioExistente.setSenha(senhaCriptografada);
+
             }
 
             usuarioExistente.setNome(usuario.getNome());
@@ -200,21 +237,19 @@ public class UsuarioService {
 
             Usuario usuarioAtualizado = usuarioRepository.save(usuarioExistente);
 
-            logger.info("[atualizar] - Usuário atualizado com sucesso id = {}", usuarioAtualizado.getId());
+            logger.info("[atualizar] - Fim - Usuário com id = {} atualizado com sucesso.", usuarioAtualizado.getId());
 
             return usuarioAtualizado;
 
-        } catch (IllegalArgumentException e) {
+        } catch (EntityNotFoundException | IllegalArgumentException e) {
 
-            logger.error("[atualizar] - Erro de validação ao atualizar usuário id = {}: {}", usuario.getId(), e.getMessage());
-
+            logger.error("[atualizar] - Fim - Erro de validação ao atualizar usuário com id = {}: {}", usuario.getId(), e.getMessage());
             throw e;
 
         } catch (Exception e){
 
-            logger.error("[atualizar] - Erro ao atualizar usuário id = {}: {}", usuario.getId(), e.getMessage());
-
-            throw e;
+            logger.error("[atualizar] - Fim - Erro inesperado ao atualizar usuário com id = {}: {}", usuario.getId(), e.getMessage(), e);
+            throw new RuntimeException("Erro ao atualizar usuário", e);
 
         }
     }
@@ -224,21 +259,35 @@ public class UsuarioService {
      *
      * @param id ID do usuário a ser deletado.
      * @throws EntityNotFoundException se o usuário não existir.
+     * @throws RuntimeException se ocorrer um erro inesperado ao deletar.
      */
     public void deletar(Long id) {
 
-        logger.info("[deletar] - Deletando usuário id = {}", id);
+        logger.info("[deletar] - Inicio - Tentativa de deletar o usuário com id = {}", id);
 
-        if (!usuarioRepository.existsById(id)) {
+        try {
 
-            logger.error("[deletar] - Usuário não encontrado para id = {}", id);
+            if (!usuarioRepository.existsById(id)) {
 
-            throw new EntityNotFoundException("Usuário não encontrado para exclusão.");
+                throw new EntityNotFoundException("Usuário com id " + id + " não encontrado para exclusão.");
+
+            }
+
+            usuarioRepository.deleteById(id);
+
+            logger.info("[deletar] - Fim - Usuário com id = {} deletado com sucesso.", id);
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[deletar] - Fim - Erro: {}", e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+
+            logger.error("[deletar] - Fim - Erro inesperado ao deletar usuário com id = {}: {}", id, e.getMessage(), e);
+            throw new RuntimeException("Erro ao deletar usuário", e);
+
         }
-
-        usuarioRepository.deleteById(id);
-
-        logger.info("[deletar] - Usuário deletado com sucesso id = {}", id);
     }
 
     /**
@@ -250,6 +299,8 @@ public class UsuarioService {
      */
     private void validarUsuario(Usuario usuario, boolean isNovoUsuario) {
 
+        logger.info("[validarUsuario] - Inicio - Validando dados do usuário com email: {}", usuario.getEmail());
+
         if (usuario == null) {
 
             throw new IllegalArgumentException("Usuário não pode ser nulo.");
@@ -259,11 +310,13 @@ public class UsuarioService {
         if (usuario.getNome() == null || usuario.getNome().isBlank()) {
 
             throw new IllegalArgumentException("Nome do usuário é obrigatório.");
+
         }
 
         if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
 
             throw new IllegalArgumentException("Email do usuário é obrigatório.");
+
         }
 
         if (isNovoUsuario && (usuario.getSenha() == null || usuario.getSenha().isBlank())) {
@@ -287,49 +340,70 @@ public class UsuarioService {
                     throw new IllegalArgumentException("O e-mail informado já está em uso por outro usuário.");
 
                 }
-
             }
-
         }
-
+        logger.info("[validarUsuario] - Fim - Validação concluída com sucesso para o usuário com email: {}", usuario.getEmail());
     }
 
 
     /**
-     * Lista todos as status do usuário
+     * Lista todos os status do usuário.
      *
      * @return List com os status do usuário.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os status.
      */
     public List<Status> listarStatus() {
 
-        logger.info("[listarStatus] - Listando sexo dos animais");
+        logger.info("[listarStatus] - Inicio - Buscando todos os status de usuário.");
 
-        List<Status> listaStatus = statusRepository.findAll();
+        try {
 
-        logger.info("[listarStatus] - Encontrados {} status", listaStatus.size());
+            List<Status> listaStatus = statusRepository.findAll();
 
-        return listaStatus;
+            logger.info("[listarStatus] - Fim - Busca concluída. Encontrados {} status.", listaStatus.size());
+
+            return listaStatus;
+
+        } catch (Exception e) {
+
+            logger.error("[listarStatus] - Fim - Erro inesperado ao listar status: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar status", e);
+
+        }
     }
 
     /**
-     * Envia código de recuperação para o usuário por email
+     * Envia código de recuperação para o usuário por email.
      *
-     * @return Resultado do envio.
+     * @param email Email do destinatário.
+     * @return {@code true} se o usuário existe e o processo de envio foi iniciado, {@code false} caso contrário.
      */
     public boolean enviarCodigoEmail(String email){
 
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        logger.info("[enviarCodigoEmail] - Inicio - Tentativa de envio de código para o email: {}", email);
 
-        if(usuario == null){
+        try {
 
+            Optional<Usuario> usuarioOptional = usuarioRepository.findByEmail(email);
+
+            if(usuarioOptional.isEmpty()){
+
+                logger.warn("[enviarCodigoEmail] - Fim - Usuário com email {} não encontrado.", email);
+                return false;
+
+            }
+
+            // emailSender.enviarCodigoEmail(email);
+
+            logger.info("[enviarCodigoEmail] - Fim - Processo de envio de código iniciado para o email: {}", email);
+            return true;
+
+        } catch (Exception e) {
+
+            logger.error("[enviarCodigoEmail] - Fim - Erro inesperado ao enviar código para o email {}: {}", email, e.getMessage(), e);
             return false;
 
         }
-
-        // emailSender.enviarCodigoEmail(email);
-
-        return true;
-
     }
 
     /**
@@ -337,70 +411,102 @@ public class UsuarioService {
      *
      * @param idUsuario Id do usuário
      * @param codigo Código a ser validado
-     *
-     * @return true se o código for válido e não estiver expirado, caso contrário false.
+     * @return {@code true} se o código for válido e não estiver expirado, caso contrário {@code false}.
      */
     public boolean validarCodigo(Long idUsuario, String codigo) {
 
-        logger.info("[validarCodigo] - Validando código para o usuário ID: {}", idUsuario);
+        logger.info("[validarCodigo] - Inicio - Validando código para o usuário ID: {}", idUsuario);
 
-        Optional<Usuario> usuarioOptional = usuarioRepository.findById(idUsuario);
+        try {
 
-        if (usuarioOptional.isEmpty()) {
-            logger.warn("[validarCodigo] - Tentativa de validação para usuário inexistente. ID: {}", idUsuario);
-            return false;
-        }
+            Optional<Usuario> usuarioOptional = usuarioRepository.findById(idUsuario);
 
-        Usuario usuario = usuarioOptional.get();
+            if (usuarioOptional.isEmpty()) {
 
-        if(usuario.getExpiracaoCodigo() == null){
+                logger.warn("[validarCodigo] - Fim - Tentativa de validação para usuário inexistente. ID: {}", idUsuario);
+                return false;
 
-            logger.warn("[validarCodigo] - Código de recuperação expirou para o usuário ID: {}", idUsuario);
-            return false;
-
-        }
-
-        boolean codigoCorreto = codigo != null && codigo.equals(usuario.getCodigoRecuperacao());
-        boolean naoExpirou = usuario.getExpiracaoCodigo() != null && LocalDateTime.now().isBefore(usuario.getExpiracaoCodigo());
-
-        if (codigoCorreto && naoExpirou) {
-
-            usuario.setCodigoRecuperacao(null);
-            usuario.setExpiracaoCodigo(null);
-            usuarioRepository.save(usuario);
-
-            logger.info("[validarCodigo] - Código validado com sucesso para o usuário ID: {}", idUsuario);
-            return true;
-        } else {
-            if (!codigoCorreto) {
-                logger.warn("[validarCodigo] - Código fornecido é inválido para o usuário ID: {}", idUsuario);
             }
-            if (!naoExpirou) {
-                logger.warn("[validarCodigo] - Código de recuperação expirou para o usuário ID: {}", idUsuario);
+
+            Usuario usuario = usuarioOptional.get();
+
+            if(usuario.getExpiracaoCodigo() == null){
+
+                logger.warn("[validarCodigo] - Fim - Usuário ID {} não possui um código de recuperação ativo.", idUsuario);
+                return false;
+
             }
+
+            boolean codigoCorreto = codigo != null && codigo.equals(usuario.getCodigoRecuperacao());
+            boolean naoExpirou = LocalDateTime.now().isBefore(usuario.getExpiracaoCodigo());
+
+            if (codigoCorreto && naoExpirou) {
+
+                usuario.setCodigoRecuperacao(null);
+                usuario.setExpiracaoCodigo(null);
+                usuarioRepository.save(usuario);
+
+                logger.info("[validarCodigo] - Fim - Código validado com sucesso para o usuário ID: {}", idUsuario);
+                return true;
+
+            } else {
+
+                if (!codigoCorreto) {
+                    logger.warn("[validarCodigo] - Fim - Código fornecido é inválido para o usuário ID: {}", idUsuario);
+                }
+                if (!naoExpirou) {
+                    logger.warn("[validarCodigo] - Fim - Código de recuperação expirou para o usuário ID: {}", idUsuario);
+                }
+                return false;
+            }
+
+        } catch (Exception e) {
+
+            logger.error("[validarCodigo] - Fim - Erro inesperado ao validar código para o usuário ID {}: {}", idUsuario, e.getMessage(), e);
             return false;
+
         }
     }
 
     /**
-     * Envia um aviso de campanha de vacinação para cada usuário por email
-     *
+     * Envia um aviso de campanha de vacinação para cada usuário por email.
+     * O processo continua mesmo que o envio para um usuário falhe.
      */
     public void enviarEmailClientesCampanhaVacinacao() {
 
-        List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
+        logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");
 
-        for(Usuario usuario : usuarios) {
+        try {
 
-            if(usuario.isReceberEmail()) {
+            List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
+            logger.info("[enviarEmailClientesCampanhaVacinacao] - Encontrados {} clientes ativos.", usuarios.size());
 
-                // emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+            for(Usuario usuario : usuarios) {
 
+                try {
+
+                    if(usuario.isReceberEmail()) {
+
+                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
+                        // emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+
+                    } else {
+
+                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Usuário id {} não optou por receber emails.", usuario.getId());
+
+                    }
+
+                } catch (Exception e) {
+
+                    logger.error("[enviarEmailClientesCampanhaVacinacao] - Falha ao enviar email de campanha para o usuário id {}: {}", usuario.getId(), e.getMessage());
+                }
             }
+            logger.info("[enviarEmailClientesCampanhaVacinacao] - Fim - Processo de envio de campanha concluído.");
 
+        } catch (Exception e) {
+
+            logger.error("[enviarEmailClientesCampanhaVacinacao] - Fim - Erro crítico ao buscar usuários para campanha: {}", e.getMessage(), e);
 
         }
-
     }
-
 }
