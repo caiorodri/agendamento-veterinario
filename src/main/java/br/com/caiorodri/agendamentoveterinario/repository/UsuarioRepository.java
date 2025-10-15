@@ -29,8 +29,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 	public Optional<Usuario> findByEmailAndSenha(String email, String senha);
 
 	@Query("SELECT u FROM Usuario u " +
-			"LEFT JOIN FETCH u.perfil p " +
-            "LEFT JOIN FETCH u.telefones t " +
+			"LEFT JOIN FETCH u.perfil perfil " +
+            "LEFT JOIN FETCH u.status status " +
+            "LEFT JOIN FETCH u.telefones telefones " +
+            "LEFT JOIN FETCH u.agendamentos agendamentos " +
+            "LEFT JOIN FETCH u.animais animais " +
 			"WHERE u.email = ?1")
 	public Optional<Usuario> findByEmail(String email);
 	
