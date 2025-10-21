@@ -40,13 +40,15 @@ public class EmailSender {
     public boolean enviarCodigoEmail(String destinatario) {
         try {
 
-            Optional<Usuario> usuarioOptional = usuarioRepository.findByEmail(destinatario);
+            Optional<Usuario> usuarioOptional = usuarioRepository.findByEmailWithSets(destinatario);
 
             if (usuarioOptional.isEmpty()) {
                 return false;
             }
 
             Usuario usuario = usuarioOptional.get();
+            usuario = usuarioRepository.findByIdWithAgendamentos(usuario.getId()).get();
+
 
             String codigo = gerarCodigo();
 
@@ -234,7 +236,7 @@ public class EmailSender {
 
             if(dono.getEmail() == null) {
 
-                dono = usuarioRepository.findById(dono.getId()).orElse(null);
+                dono = usuarioRepository.findByIdWithSets(dono.getId()).orElse(null);
 
                 if(dono == null) {
 
@@ -383,7 +385,7 @@ public class EmailSender {
 
             if(cliente.getEmail() == null) {
 
-                cliente = usuarioRepository.findById(cliente.getId()).orElse(null);
+                cliente = usuarioRepository.findByIdWithSets(cliente.getId()).orElse(null);
 
                 if(cliente == null) {
 
@@ -621,7 +623,7 @@ public class EmailSender {
 
             if(usuario.getEmail() == null) {
 
-                usuario = usuarioRepository.findById(usuario.getId()).orElse(null);
+                usuario = usuarioRepository.findByIdWithSets(usuario.getId()).orElse(null);
 
                 if(usuario == null) {
 

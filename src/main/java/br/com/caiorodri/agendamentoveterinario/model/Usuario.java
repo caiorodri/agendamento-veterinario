@@ -4,19 +4,19 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
+@ToString(exclude = {"animais", "agendamentos", "telefones"})
 @EqualsAndHashCode(of = "id")
 public class Usuario implements UserDetails {
 
@@ -57,7 +57,7 @@ public class Usuario implements UserDetails {
 	
 	@OneToMany(mappedBy = "dono", fetch = FetchType.LAZY)
     @JsonManagedReference("usuario-animal")
-	private List<Animal> animais;
+	private Set<Animal> animais;
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
     @JsonManagedReference("cliente-agendamento")
@@ -70,7 +70,7 @@ public class Usuario implements UserDetails {
 	    joinColumns = @JoinColumn(name = "id_usuario")
 	)
 	@Column(name = "telefone")
-	private List<String> telefones;
+	private Set<String> telefones;
 
 	@Column(name = "email_realizar_consulta_recebido")
 	private boolean emailRealizarConsultaRecebido;
@@ -81,7 +81,9 @@ public class Usuario implements UserDetails {
 	public Usuario() {
 		
 		this.endereco = new Endereco();
-		this.telefones = new ArrayList<>();
+		this.telefones = new HashSet<>();
+        this.animais = new HashSet<>();
+        this.agendamentos = new ArrayList<>();
 		this.status = new Status();
 		this.perfil = new Perfil();
 		
@@ -132,5 +134,5 @@ public class Usuario implements UserDetails {
     public boolean isEnabled() {
         return this.status != null && this.status.getNome().equalsIgnoreCase("Ativo");
     }
-	
+
 }

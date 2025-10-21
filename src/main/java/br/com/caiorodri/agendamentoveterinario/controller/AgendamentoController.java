@@ -4,7 +4,11 @@ import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoStatusDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoTipoDTO;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +41,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("agendamentos")
+@Tag(name = "Agendamentos", description = "Endpoints para gerenciamento de agendamentos")
 public class AgendamentoController {
 
     @Autowired
@@ -48,14 +54,19 @@ public class AgendamentoController {
 
     @Operation(
             summary = "Listar agendamentos",
-            description = "Retorna uma lista paginada de todos os agendamentos cadastrados.",
+            description = "Retorna uma lista paginada de todos os agendamentos cadastrados. (Requer perfil: ADMINISTRADOR, VETERINARIO ou RECEPCIONISTA)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
     @GetMapping("")
-    public ResponseEntity<Page<AgendamentoDTO>> listar(@RequestParam("pagina") int pagina, @RequestParam("quantidadeItens") int quantidadeItens) {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<Page<AgendamentoDTO>> listar(
+            @Parameter(description = "Número da página (inicia em 0)", required = true, example = "0") @RequestParam("pagina") int pagina,
+            @Parameter(description = "Quantidade de itens por página", required = true, example = "10") @RequestParam("quantidadeItens") int quantidadeItens) {
 
         logger.info("[listar] - Início");
 
@@ -76,12 +87,14 @@ public class AgendamentoController {
             description = "Recupera um agendamento com base no ID informado.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Agendamento encontrado com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
     @GetMapping("/{id}")
-    public ResponseEntity<AgendamentoDTO> recuperar(@PathVariable(name = "id") Long id) {
+    public ResponseEntity<AgendamentoDTO> recuperar(
+            @Parameter(description = "ID do agendamento a ser buscado", required = true, example = "1") @PathVariable(name = "id") Long id) {
 
         logger.info("[recuperar] - Início");
 
@@ -100,12 +113,16 @@ public class AgendamentoController {
             description = "Retorna uma lista paginada de agendamentos associados ao animal informado.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "404", description = "Animal não encontrado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
     @GetMapping("/animal/{idAnimal}")
-    public ResponseEntity<Page<AgendamentoDTO>> listarByAnimal(@PathVariable Long idAnimal, @RequestParam("pagina") int pagina, @RequestParam("quantidadeItens") int quantidadeItens) {
+    public ResponseEntity<Page<AgendamentoDTO>> listarByAnimal(
+            @Parameter(description = "ID do animal para filtrar os agendamentos", required = true, example = "1") @PathVariable Long idAnimal,
+            @Parameter(description = "Número da página (inicia em 0)", required = true, example = "0") @RequestParam("pagina") int pagina,
+            @Parameter(description = "Quantidade de itens por página", required = true, example = "10") @RequestParam("quantidadeItens") int quantidadeItens) {
 
         logger.info("[listarByAnimal] - Início");
 
@@ -126,12 +143,16 @@ public class AgendamentoController {
             description = "Retorna uma lista paginada de agendamentos associados ao usuário informado.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
     @GetMapping("/usuario/{idUsuario}")
-    public ResponseEntity<Page<AgendamentoDTO>> listarByUsuario(@PathVariable Long idUsuario, @RequestParam("pagina") int pagina, @RequestParam("quantidadeItens") int quantidadeItens) {
+    public ResponseEntity<Page<AgendamentoDTO>> listarByUsuario(
+            @Parameter(description = "ID do usuário (cliente) para filtrar os agendamentos", required = true, example = "1") @PathVariable Long idUsuario,
+            @Parameter(description = "Número da página (inicia em 0)", required = true, example = "0") @RequestParam("pagina") int pagina,
+            @Parameter(description = "Quantidade de itens por página", required = true, example = "10") @RequestParam("quantidadeItens") int quantidadeItens) {
 
         logger.info("[listarByUsuario] - Início");
 
@@ -150,9 +171,15 @@ public class AgendamentoController {
     @Operation(
             summary = "Cadastrar novo agendamento",
             description = "Cria um novo agendamento no sistema com base nos dados informados.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Objeto JSON contendo os dados do novo agendamento.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = Agendamento.class))
+            ),
             responses = {
                     @ApiResponse(responseCode = "201", description = "Agendamento criado com sucesso"),
-                    @ApiResponse(responseCode = "400", description = "Erro ao cadastrar o agendamento"),
+                    @ApiResponse(responseCode = "400", description = "Erro ao cadastrar o agendamento (ex: conflito de horário, dados inválidos)"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
@@ -174,9 +201,15 @@ public class AgendamentoController {
     @Operation(
             summary = "Atualizar agendamento",
             description = "Atualiza os dados de um agendamento já existente.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Objeto JSON contendo os dados do agendamento a ser atualizado, incluindo seu ID.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = Agendamento.class))
+            ),
             responses = {
                     @ApiResponse(responseCode = "200", description = "Agendamento atualizado com sucesso"),
-                    @ApiResponse(responseCode = "400", description = "Erro ao atualizar o agendamento"),
+                    @ApiResponse(responseCode = "400", description = "Erro ao atualizar o agendamento (ex: conflito de horário, dados inválidos)"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
@@ -197,16 +230,20 @@ public class AgendamentoController {
 
     @Operation(
             summary = "Excluir agendamento",
-            description = "Remove um agendamento existente do sistema.",
+            description = "Remove um agendamento existente do sistema. (Requer perfil: ADMINISTRADOR)",
             responses = {
                     @ApiResponse(responseCode = "204", description = "Agendamento excluído com sucesso"),
                     @ApiResponse(responseCode = "400", description = "Erro ao excluir agendamento"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
                     @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
                     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
             }
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR')")
+    public ResponseEntity<Void> deletar(
+            @Parameter(description = "ID do agendamento a ser excluído", required = true, example = "1") @PathVariable Long id) {
 
         logger.info("[deletar] - Início");
 
@@ -220,11 +257,13 @@ public class AgendamentoController {
 
 
     @Operation(
-            summary = "Listar todas os status",
-            description = "Retorna uma lista de todos os status de agendamento."
+            summary = "Listar status de agendamento",
+            description = "Retorna uma lista de todos os status possíveis para um agendamento (ex: Pendente, Confirmado, Cancelado)."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status listados com sucesso")
+            @ApiResponse(responseCode = "200", description = "Status listados com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @GetMapping("/status")
     public ResponseEntity<List<AgendamentoStatusDTO>> listarAgendamentoStatus() {
@@ -242,11 +281,13 @@ public class AgendamentoController {
 
 
     @Operation(
-            summary = "Listar todas os tipos de agendamentos",
-            description = "Retorna uma lista de todos os tipos de agendamento."
+            summary = "Listar tipos de agendamento",
+            description = "Retorna uma lista de todos os tipos possíveis para um agendamento (ex: Consulta, Cirurgia, Vacina)."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tipos listados com sucesso")
+            @ApiResponse(responseCode = "200", description = "Tipos listados com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @GetMapping("/tipos")
     public ResponseEntity<List<AgendamentoTipoDTO>> listarAgendamentoTipo() {

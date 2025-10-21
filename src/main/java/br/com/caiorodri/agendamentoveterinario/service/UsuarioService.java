@@ -14,10 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import br.com.caiorodri.agendamentoveterinario.dto.UsuarioRequestDTO;
 import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UsuarioService {
@@ -43,13 +43,16 @@ public class UsuarioService {
      * @return Usuário encontrado.
      * @throws EntityNotFoundException caso não exista usuário com o id enviado.
      */
+    @Transactional(readOnly = true)
     public Usuario recuperar(Long id) {
 
         logger.info("[recuperar] - Inicio - Buscando usuário com id = {}", id);
 
         try {
 
-            Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário com id " + id + " não encontrado"));
+            Usuario usuario = usuarioRepository.findByIdWithSets(id).orElseThrow(() -> new EntityNotFoundException("Usuário com id " + id + " não encontrado"));
+
+            usuario = usuarioRepository.findByIdWithAgendamentos(id).get();
 
             logger.info("[recuperar] - Fim - Usuário com id = {} encontrado", id);
 
@@ -70,6 +73,7 @@ public class UsuarioService {
      * @return Page com usuários.
      * @throws RuntimeException se ocorrer um erro inesperado ao consultar os usuários.
      */
+    @Transactional(readOnly = true)
     public Page<Usuario> listar(Pageable pageable) {
 
         logger.info("[listar] - Inicio - Listando usuários: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
@@ -97,14 +101,17 @@ public class UsuarioService {
      * @return Usuário encontrado.
      * @throws EntityNotFoundException caso não exista usuário com o e-mail enviado.
      */
+    @Transactional(readOnly = true)
     public Usuario recuperarByEmail(String email) {
 
         logger.info("[recuperarByEmail] - Inicio - Buscando usuário com email = {}", email);
 
         try {
 
-            Usuario usuario = usuarioRepository.findByEmail(email)
+            Usuario usuario = usuarioRepository.findByEmailWithSets(email)
                     .orElseThrow(() -> new EntityNotFoundException("Usuário com email " + email + " não encontrado"));
+
+            usuario = usuarioRepository.findByIdWithAgendamentos(usuario.getId()).get();
 
             logger.info("[recuperarByEmail] - Fim - Usuário com email = {} encontrado", email);
 
@@ -118,46 +125,48 @@ public class UsuarioService {
         }
     }
 
-    /**
-     * Autentica um usuário com base no email e senha.
-     *
-     * @param usuarioRequest DTO com credenciais de login.
-     * @return Usuário autenticado.
-     * @throws SecurityException caso as credenciais sejam inválidas.
-     * @throws RuntimeException se ocorrer um erro inesperado.
-     */
-    public Usuario autenticar(UsuarioRequestDTO usuarioRequest) {
-
-        logger.info("[autenticar] - Inicio - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
-
-        try {
-
-            Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
-                    .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
-
-            if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
-
-                logger.info("[autenticar] - Fim - Usuário autenticado com sucesso: {}", usuario.getEmail());
-                return usuario;
-
-            } else {
-
-                throw new SecurityException("Credenciais inválidas");
-
-            }
-
-        } catch (SecurityException e) {
-
-            logger.warn("[autenticar] - Fim - Falha na autenticação para o email {}: {}", usuarioRequest.getEmail(), e.getMessage());
-            throw e;
-
-        } catch (Exception e) {
-
-            logger.error("[autenticar] - Fim - Erro inesperado ao autenticar {}: {}", usuarioRequest.getEmail(), e.getMessage(), e);
-            throw new RuntimeException("Erro no processo de autenticação", e);
-
-        }
-    }
+//    /**
+//     * Autentica um usuário com base no email e senha.
+//     *
+//     * @param usuarioRequest DTO com credenciais de login.
+//     * @return Usuário autenticado.
+//     * @throws SecurityException caso as credenciais sejam inválidas.
+//     * @throws RuntimeException se ocorrer um erro inesperado.
+//     */
+//    public Usuario autenticar(UsuarioRequestDTO usuarioRequest) {
+//
+//        logger.info("[autenticar] - Inicio - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
+//
+//        try {
+//
+//            Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
+//                    .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
+//
+//            usuario = usuarioRepository.findByIdWithAgendamentos(usuario.getId()).get();
+//
+//            if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
+//
+//                logger.info("[autenticar] - Fim - Usuário autenticado com sucesso: {}", usuario.getEmail());
+//                return usuario;
+//
+//            } else {
+//
+//                throw new SecurityException("Credenciais inválidas");
+//
+//            }
+//
+//        } catch (SecurityException e) {
+//
+//            logger.warn("[autenticar] - Fim - Falha na autenticação para o email {}: {}", usuarioRequest.getEmail(), e.getMessage());
+//            throw e;
+//
+//        } catch (Exception e) {
+//
+//            logger.error("[autenticar] - Fim - Erro inesperado ao autenticar {}: {}", usuarioRequest.getEmail(), e.getMessage(), e);
+//            throw new RuntimeException("Erro no processo de autenticação", e);
+//
+//        }
+//    }
 
     /**
      * Salva um novo usuário no banco de dados.
@@ -167,6 +176,7 @@ public class UsuarioService {
      * @throws IllegalArgumentException se dados obrigatórios estiverem ausentes ou inválidos.
      * @throws RuntimeException se ocorrer um erro inesperado ao salvar.
      */
+    @Transactional
     public Usuario salvar(Usuario usuario) {
 
         logger.info("[salvar] - Inicio - Tentativa de salvar um novo usuário.");
@@ -208,6 +218,7 @@ public class UsuarioService {
      * @throws IllegalArgumentException se os dados para atualização forem inválidos.
      * @throws RuntimeException se ocorrer um erro inesperado ao atualizar.
      */
+    @Transactional
     public Usuario atualizar(Usuario usuario) {
 
         logger.info("[atualizar] - Inicio - Tentativa de atualizar o usuário com id = {}", usuario.getId());
@@ -230,12 +241,19 @@ public class UsuarioService {
             usuarioExistente.setEmail(usuario.getEmail());
             usuarioExistente.setDataNascimento(usuario.getDataNascimento());
             usuarioExistente.setEndereco(usuario.getEndereco());
-            usuarioExistente.setTelefones(usuario.getTelefones());
+
+            if (usuario.getTelefones() != null) {
+                usuarioExistente.getTelefones().clear();
+                usuarioExistente.getTelefones().addAll(usuario.getTelefones());
+            }
+
             usuarioExistente.setStatus(usuario.getStatus());
             usuarioExistente.setPerfil(usuario.getPerfil());
             usuarioExistente.setReceberEmail(usuario.isReceberEmail());
 
-            Usuario usuarioAtualizado = usuarioRepository.save(usuarioExistente);
+            usuarioRepository.saveAndFlush(usuarioExistente);
+
+            Usuario usuarioAtualizado = this.recuperar(usuario.getId());
 
             logger.info("[atualizar] - Fim - Usuário com id = {} atualizado com sucesso.", usuarioAtualizado.getId());
 
@@ -261,6 +279,7 @@ public class UsuarioService {
      * @throws EntityNotFoundException se o usuário não existir.
      * @throws RuntimeException se ocorrer um erro inesperado ao deletar.
      */
+    @Transactional
     public void deletar(Long id) {
 
         logger.info("[deletar] - Inicio - Tentativa de deletar o usuário com id = {}", id);
@@ -325,6 +344,12 @@ public class UsuarioService {
 
         }
 
+        if (isNovoUsuario && usuarioRepository.existsByCpf(usuario.getCpf())) {
+
+            throw new IllegalArgumentException("CPF já cadastrado no sistema.");
+
+        }
+
         Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(usuario.getEmail());
 
         if (usuarioExistente.isPresent()) {
@@ -342,7 +367,9 @@ public class UsuarioService {
                 }
             }
         }
+
         logger.info("[validarUsuario] - Fim - Validação concluída com sucesso para o usuário com email: {}", usuario.getEmail());
+
     }
 
 
@@ -352,6 +379,7 @@ public class UsuarioService {
      * @return List com os status do usuário.
      * @throws RuntimeException se ocorrer um erro inesperado ao consultar os status.
      */
+    @Transactional(readOnly = true)
     public List<Status> listarStatus() {
 
         logger.info("[listarStatus] - Inicio - Buscando todos os status de usuário.");
@@ -378,6 +406,7 @@ public class UsuarioService {
      * @param email Email do destinatário.
      * @return {@code true} se o usuário existe e o processo de envio foi iniciado, {@code false} caso contrário.
      */
+    @Transactional(readOnly = true)
     public boolean enviarCodigoEmail(String email){
 
         logger.info("[enviarCodigoEmail] - Inicio - Tentativa de envio de código para o email: {}", email);
@@ -413,6 +442,7 @@ public class UsuarioService {
      * @param codigo Código a ser validado
      * @return {@code true} se o código for válido e não estiver expirado, caso contrário {@code false}.
      */
+    @Transactional
     public boolean validarCodigo(Long idUsuario, String codigo) {
 
         logger.info("[validarCodigo] - Inicio - Validando código para o usuário ID: {}", idUsuario);
@@ -472,6 +502,7 @@ public class UsuarioService {
      * Envia um aviso de campanha de vacinação para cada usuário por email.
      * O processo continua mesmo que o envio para um usuário falhe.
      */
+    @Transactional(readOnly = true)
     public void enviarEmailClientesCampanhaVacinacao() {
 
         logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");

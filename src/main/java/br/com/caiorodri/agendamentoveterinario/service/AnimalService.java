@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import br.com.caiorodri.agendamentoveterinario.model.Animal;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AnimalService {
@@ -47,6 +49,7 @@ public class AnimalService {
      * @return Animal encontrado.
      * @throws EntityNotFoundException caso não exista animal com o id enviado.
      */
+    @Transactional(readOnly = true)
     public Animal recuperar(Long id) {
 
         logger.info("[recuperar] - Inicio - Buscando animal com id = {}", id);
@@ -75,6 +78,7 @@ public class AnimalService {
      * @return Page com animais.
      * @throws RuntimeException se ocorrer um erro inesperado ao consultar os animais.
      */
+    @Transactional(readOnly = true)
     public Page<Animal> listar(Pageable pageable) {
 
         logger.info("[listar] - Inicio - Listando animais: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
@@ -103,6 +107,7 @@ public class AnimalService {
      * @return Page com animais do dono.
      * @throws EntityNotFoundException caso o dono não seja encontrado.
      */
+    @Transactional(readOnly = true)
     public Page<Animal> listarByDonoId(Long idDono, Pageable pageable) {
 
         logger.info("[listarByDonoId] - Inicio - Listando animais para dono id = {}", idDono);
@@ -138,6 +143,7 @@ public class AnimalService {
      * @throws EntityNotFoundException se o dono, raça ou sexo associado não for encontrado.
      * @throws RuntimeException se ocorrer um erro inesperado ao salvar.
      */
+    @Transactional
     public Animal salvar(Animal animal) {
 
         logger.info("[salvar] - Inicio - Tentativa de salvar um novo animal.");
@@ -176,6 +182,7 @@ public class AnimalService {
      * @throws IllegalArgumentException se os dados para atualização forem inválidos.
      * @throws RuntimeException se ocorrer um erro inesperado ao atualizar.
      */
+    @Transactional
     public Animal atualizar(Animal animal) {
 
         logger.info("[atualizar] - Inicio - Tentativa de atualizar o animal com id = {}", animal.getId());
@@ -218,6 +225,7 @@ public class AnimalService {
      * @throws EntityNotFoundException se o animal não existir.
      * @throws RuntimeException se ocorrer um erro inesperado ao deletar.
      */
+    @Transactional
     public void deletar(Long id) {
 
         logger.info("[deletar] - Inicio - Tentativa de deletar o animal com id = {}", id);
@@ -227,6 +235,14 @@ public class AnimalService {
             if (!animalRepository.existsById(id)) {
 
                 throw new EntityNotFoundException("Animal com id " + id + " não encontrado para exclusão.");
+            }
+
+            Animal animal = animalRepository.findById(id).get();
+
+            if(animal.getAgendamentos().size() > 0){
+
+                throw new Exception("Não pode deletar o animal com id " + id + " pois ele possui agendamentos associados");
+
             }
 
             animalRepository.deleteById(id);
@@ -292,6 +308,7 @@ public class AnimalService {
      * @return List com os sexos dos animais.
      * @throws RuntimeException se ocorrer um erro inesperado ao consultar os sexos.
      */
+    @Transactional(readOnly = true)
     public List<Sexo> listarSexos() {
 
         logger.info("[listarSexos] - Inicio - Buscando todos os sexos.");
@@ -319,6 +336,7 @@ public class AnimalService {
      * @return List com as raças dos animais.
      * @throws RuntimeException se ocorrer um erro inesperado ao consultar as raças.
      */
+    @Transactional(readOnly = true)
     public List<Raca> listarRacasByIdEspecie(Integer idEspecie) {
 
         logger.info("[listarRacasByIdEspecie] - Inicio - Listando raças da especie com id = {}", idEspecie);
