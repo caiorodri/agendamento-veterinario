@@ -63,8 +63,8 @@ public class TokenService {
                     .getSubject();
         } catch (JWTVerificationException exception) {
 
-            logger.error("[validateToken] - Fim - Falha ao validar token: ", exception);
-            return "";
+            logger.warn("[validateToken] - Fim - Token inválido ou expirado: {}", exception.getMessage());
+            throw new JWTVerificationException("Token inválido ou expirado.");
         }
     }
 
