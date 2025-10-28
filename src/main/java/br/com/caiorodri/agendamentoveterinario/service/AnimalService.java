@@ -358,6 +358,34 @@ public class AnimalService {
     }
 
     /**
+     * Lista todas as raças de animais.
+     *
+     * @return List com as raças dos animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar as raças.
+     */
+    @Transactional(readOnly = true)
+    public List<Raca> listarRacas() {
+
+        logger.info("[listarRacas] - Inicio - Listando raças");
+
+        try {
+
+            List<Raca> racas = racaRepository.findAll();
+
+            logger.info("[listarRacas] - Fim - Encontrados {} raças.", racas.size());
+
+            return racas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRacas] - Fim - Erro inesperado ao listar raças: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar raças", e);
+
+        }
+    }
+
+
+    /**
      * Lista todas as espécies dos animais.
      *
      * @return List com as espécies dos animais.

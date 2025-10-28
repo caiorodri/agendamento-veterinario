@@ -259,6 +259,29 @@ public class AnimalController {
     }
 
     @Operation(
+            summary = "Listar raças",
+            description = "Retorna uma lista de raças."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Raças listadas com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    @GetMapping("/racas")
+    public ResponseEntity<List<RacaDTO>> listarRacas() {
+
+        logger.info("[listarRacas] - Início");
+
+        List<Raca> racas = animalService.listarRacas();
+
+        List<RacaDTO> racasDTO = mapper.racaListToDtoList(racas);
+
+        logger.info("[listarRacas] - Fim");
+
+        return new ResponseEntity<>(racasDTO, HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Listar todos os sexos",
             description = "Retorna uma lista de todos os sexos de animais disponíveis para cadastro (ex: Macho, Fêmea)."
     )
