@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
 import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
 import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
@@ -29,8 +30,8 @@ public class UsuarioService {
     @Autowired
     private StatusRepository statusRepository;
 
-    // @Autowired
-    // private EmailSender emailSender;
+    @Autowired
+    private EmailSender emailSender;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -126,49 +127,6 @@ public class UsuarioService {
         }
     }
 
-//    /**
-//     * Autentica um usuário com base no email e senha.
-//     *
-//     * @param usuarioRequest DTO com credenciais de login.
-//     * @return Usuário autenticado.
-//     * @throws SecurityException caso as credenciais sejam inválidas.
-//     * @throws RuntimeException se ocorrer um erro inesperado.
-//     */
-//    public Usuario autenticar(UsuarioRequestDTO usuarioRequest) {
-//
-//        logger.info("[autenticar] - Inicio - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
-//
-//        try {
-//
-//            Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
-//                    .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
-//
-//            usuario = usuarioRepository.findByIdWithAgendamentos(usuario.getId()).get();
-//
-//            if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
-//
-//                logger.info("[autenticar] - Fim - Usuário autenticado com sucesso: {}", usuario.getEmail());
-//                return usuario;
-//
-//            } else {
-//
-//                throw new SecurityException("Credenciais inválidas");
-//
-//            }
-//
-//        } catch (SecurityException e) {
-//
-//            logger.warn("[autenticar] - Fim - Falha na autenticação para o email {}: {}", usuarioRequest.getEmail(), e.getMessage());
-//            throw e;
-//
-//        } catch (Exception e) {
-//
-//            logger.error("[autenticar] - Fim - Erro inesperado ao autenticar {}: {}", usuarioRequest.getEmail(), e.getMessage(), e);
-//            throw new RuntimeException("Erro no processo de autenticação", e);
-//
-//        }
-//    }
-
     /**
      * Salva um novo usuário no banco de dados.
      *
@@ -191,7 +149,7 @@ public class UsuarioService {
 
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-            // emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
+            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
             logger.info("[salvar] - Fim - Usuário salvo com sucesso com o id = {}", usuarioSalvo.getId());
 
@@ -469,7 +427,7 @@ public class UsuarioService {
 
             }
 
-            // emailSender.enviarCodigoEmail(email);
+            emailSender.enviarCodigoEmail(email);
 
             logger.info("[enviarCodigoEmail] - Fim - Processo de envio de código iniciado para o email: {}", email);
             return true;
@@ -566,7 +524,7 @@ public class UsuarioService {
                     if(usuario.isReceberEmail()) {
 
                         logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
-                        // emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
 
                     } else {
 
