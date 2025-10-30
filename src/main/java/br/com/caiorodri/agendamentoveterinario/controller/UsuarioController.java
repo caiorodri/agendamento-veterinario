@@ -3,6 +3,7 @@ package br.com.caiorodri.agendamentoveterinario.controller;
 import br.com.caiorodri.agendamentoveterinario.dto.LoginResponseDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.StatusDTO;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
 import br.com.caiorodri.agendamentoveterinario.security.TokenService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -179,7 +180,7 @@ public class UsuarioController {
 
     @Operation(
             summary = "Cadastrar novo usuário",
-            description = "Cria um novo usuário no sistema. (Endpoint público)",
+            description = "Cria um novo usuário no sistema.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Objeto JSON contendo os dados do novo usuário.",
                     required = true,
@@ -236,6 +237,36 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Alterar senha",
+            description = "Permite que um usuário autenticado altere sua própria senha fornecendo a senha antiga e a nova senha. O usuário só pode alterar a própria senha.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Objeto JSON contendo a senha antiga e a nova senha.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Senha alterada com sucesso."),
+                    @ApiResponse(responseCode = "400", description = "Dados inválidos (senha antiga incorreta ou nova senha inválida)."),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado."),
+                    @ApiResponse(responseCode = "404", description = "Usuário não encontrado."),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @PutMapping("/alterar-senha")
+    public ResponseEntity<Void> alterarSenha(
+            @Parameter(hidden = true) @AuthenticationPrincipal Usuario usuarioLogado,
+            @RequestBody UsuarioAlterarSenha usuarioAlterarSenha) {
+
+        logger.info("[alterarSenha] - Início - Tentativa de alteração de senha para o usuário logado ID: {}", usuarioLogado.getId());
+
+        usuarioService.alterarSenha(usuarioLogado, usuarioAlterarSenha);
+
+        logger.info("[alterarSenha] - Fim - Senha alterada com sucesso para o usuário ID: {}", usuarioLogado.getId());
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(
             summary = "Excluir usuário",
             description = "Remove um usuário existente do sistema. (Requer perfil: ADMINISTRADOR)",
             responses = {
@@ -285,7 +316,7 @@ public class UsuarioController {
 
     @Operation(
             summary = "Enviar código de recuperação por e-mail",
-            description = "Inicia o processo de recuperação de senha. (Endpoint público). Para evitar enumeração de e-mail, este endpoint *sempre* retornará 200 OK, mesmo que o e-mail não exista."
+            description = "Inicia o processo de recuperação de senha."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Solicitação processada com sucesso."),
@@ -328,7 +359,7 @@ public class UsuarioController {
 
     @Operation(
             summary = "Validar código de recuperação",
-            description = "Verifica se o código de recuperação fornecido para um usuário específico é válido. (Endpoint público)"
+            description = "Verifica se o código de recuperação fornecido para um usuário específico é válido."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Código válido."),

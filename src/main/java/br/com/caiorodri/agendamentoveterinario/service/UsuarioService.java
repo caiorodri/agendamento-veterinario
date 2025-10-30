@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
 import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,13 +231,6 @@ public class UsuarioService {
 
             validarUsuario(usuario, false);
 
-            if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
-
-                String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
-                usuarioExistente.setSenha(senhaCriptografada);
-
-            }
-
             usuarioExistente.setNome(usuario.getNome());
             usuarioExistente.setEmail(usuario.getEmail());
             usuarioExistente.setDataNascimento(usuario.getDataNascimento());
@@ -269,6 +263,59 @@ public class UsuarioService {
             logger.error("[atualizar] - Fim - Erro inesperado ao atualizar usuário com id = {}: {}", usuario.getId(), e.getMessage(), e);
             throw new RuntimeException("Erro ao atualizar usuário", e);
 
+        }
+
+    }
+
+    /**
+     * Altera a senha de um usuário autenticado, validando sua senha antiga.
+     *
+     * @param usuarioLogado O usuário autenticado (principal).
+     * @param usuarioAlterarSenha DTO contendo a senha antiga e a nova senha.
+     * @throws IllegalArgumentException se a senha antiga não conferir ou a nova senha for inválida.
+     * @throws RuntimeException se ocorrer um erro inesperado.
+     */
+    @Transactional
+    public void alterarSenha(Usuario usuarioLogado, UsuarioAlterarSenha usuarioAlterarSenha) {
+
+        logger.info("[alterarSenha] - Inicio - Tentativa de alteração de senha para o usuário ID: {}", usuarioLogado.getId());
+
+        try {
+
+            if (usuarioAlterarSenha.getSenhaNova() == null || usuarioAlterarSenha.getSenhaNova().isBlank()) {
+                throw new IllegalArgumentException("A nova senha não pode estar em branco.");
+            }
+            if (usuarioAlterarSenha.getSenhaNova().length() < 8) {
+                throw new IllegalArgumentException("A nova senha deve ter no mínimo 8 caracteres.");
+            }
+
+            if (usuarioAlterarSenha.getSenhaAntiga() == null || !passwordEncoder.matches(usuarioAlterarSenha.getSenhaAntiga(), usuarioLogado.getSenha())) {
+
+                logger.warn("[alterarSenha] - Fim - Senha antiga inválida para o usuário ID: {}", usuarioLogado.getId());
+                throw new IllegalArgumentException("A senha antiga está incorreta.");
+
+            }
+
+            if (passwordEncoder.matches(usuarioAlterarSenha.getSenhaNova(), usuarioLogado.getSenha())) {
+                throw new IllegalArgumentException("A nova senha não pode ser igual à senha antiga.");
+            }
+
+            Usuario usuario = usuarioRepository.findById(usuarioLogado.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário ID " + usuarioLogado.getId() + " não encontrado na transação."));
+
+            String senhaCriptografada = passwordEncoder.encode(usuarioAlterarSenha.getSenhaNova());
+            usuario.setSenha(senhaCriptografada);
+
+            usuarioRepository.save(usuario);
+
+            logger.info("[alterarSenha] - Fim - Senha alterada com sucesso para o usuário ID: {}", usuarioLogado.getId());
+
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            logger.error("[alterarSenha] - Fim - Erro: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("[alterarSenha] - Fim - Erro inesperado ao alterar senha para o ID {}: {}", usuarioLogado.getId(), e.getMessage(), e);
+            throw new RuntimeException("Erro ao alterar senha", e);
         }
     }
 
