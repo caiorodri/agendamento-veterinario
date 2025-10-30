@@ -36,3 +36,10 @@ spring:
 springdoc:
     security:
       enabled: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
+
+endereco: ${ENDERECO}
+contato: ${CONTATO}

@@ -36,7 +36,9 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 	List<Agendamento> findByHorario(LocalDateTime inicio, LocalDateTime fim);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
-			"ORDER BY a.dataAgendamentoInicio")
+            "INNER JOIN FETCH a.animal animal " +
+            "INNER JOIN FETCH animal.dono d " +
+			"ORDER BY a.dataAgendamentoInicio DESC")
 	public Page<Agendamento> findAll(Pageable pageable);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
@@ -69,11 +71,13 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 	public Page<Agendamento> findProximosByAnimal(Long idAnimal, LocalDateTime date, Pageable pageable);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
-		   "WHERE a.animal.id = ?1")
+		   "WHERE a.animal.id = ?1 " +
+            "ORDER BY a.dataAgendamentoInicio DESC")
 	public Page<Agendamento> findByAnimal(Long idAnimal, Pageable pageable);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
-		   "WHERE a.cliente.id = ?1")
+		   "WHERE a.cliente.id = ?1 " +
+            "ORDER BY a.dataAgendamentoInicio DESC")
 	public Page<Agendamento> findByUsuario(Long idUsuario, Pageable pageable);
 	
 	@Query("SELECT a FROM Agendamento a WHERE a.animal.id = ?1 ORDER BY a.dataAgendamentoInicio DESC LIMIT 1")
@@ -84,7 +88,8 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 			"INNER JOIN FETCH a.cliente " +
 			"INNER JOIN FETCH a.veterinario " +
 			"INNER JOIN FETCH a.recepcionista " +
-			"INNER JOIN FETCH a.animal " +
+			"INNER JOIN FETCH a.animal animal " +
+            "INNER JOIN FETCH animal.dono " +
 			"WHERE a.id = ?1")
 	public Optional<Agendamento> findById(Long id);
 

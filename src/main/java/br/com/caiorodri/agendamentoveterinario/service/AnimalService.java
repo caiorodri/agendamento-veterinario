@@ -1,5 +1,10 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.Especie;
+import br.com.caiorodri.agendamentoveterinario.model.Raca;
+import br.com.caiorodri.agendamentoveterinario.model.Sexo;
+import br.com.caiorodri.agendamentoveterinario.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +13,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.caiorodri.agendamentoveterinario.model.Animal;
-import br.com.caiorodri.agendamentoveterinario.repository.AnimalRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.RacaRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.SexoRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AnimalService {
@@ -27,7 +32,13 @@ public class AnimalService {
     private RacaRepository racaRepository;
 
     @Autowired
+    private EspecieRepository especieRepository;
+
+    @Autowired
     private SexoRepository sexoRepository;
+
+    // @Autowired
+    // private EmailSender emailSender;
 
     final static Logger logger = LoggerFactory.getLogger(AnimalService.class);
 
@@ -38,16 +49,26 @@ public class AnimalService {
      * @return Animal encontrado.
      * @throws EntityNotFoundException caso não exista animal com o id enviado.
      */
+    @Transactional(readOnly = true)
     public Animal recuperar(Long id) {
 
-        logger.info("[recuperar] - Buscando animal com id = {}", id);
+        logger.info("[recuperar] - Inicio - Buscando animal com id = {}", id);
 
-        Animal animal = animalRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Animal com id " + id + " não encontrado"));
+        try {
 
-        logger.info("[recuperar] - Animal com id = {} encontrado", id);
+            Animal animal = animalRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Animal com id " + id + " não encontrado"));
 
-        return animal;
+            logger.info("[recuperar] - Fim - Animal com id = {} encontrado", id);
+
+            return animal;
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[recuperar] - Fim - Erro: {}", e.getMessage());
+            throw e;
+
+        }
     }
 
     /**
@@ -55,16 +76,27 @@ public class AnimalService {
      *
      * @param pageable Dados de paginação.
      * @return Page com animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os animais.
      */
+    @Transactional(readOnly = true)
     public Page<Animal> listar(Pageable pageable) {
 
-        logger.info("[listar] - Listando animais página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+        logger.info("[listar] - Inicio - Listando animais: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<Animal> animais = animalRepository.findAll(pageable);
+        try {
 
-        logger.info("[listar] - Encontrados {} animais", animais.getTotalElements());
+            Page<Animal> animais = animalRepository.findAll(pageable);
 
-        return animais;
+            logger.info("[listar] - Fim - Encontrados {} animais no total.", animais.getTotalElements());
+
+            return animais;
+
+        } catch (Exception e) {
+
+            logger.error("[listar] - Fim - Erro inesperado ao listar animais: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar animais", e);
+
+        }
     }
 
     /**
@@ -75,19 +107,31 @@ public class AnimalService {
      * @return Page com animais do dono.
      * @throws EntityNotFoundException caso o dono não seja encontrado.
      */
+    @Transactional(readOnly = true)
     public Page<Animal> listarByDonoId(Long idDono, Pageable pageable) {
 
-        logger.info("[listarByDonoId] - Listando animais para dono id = {}, página = {}, tamanho = {}", idDono, pageable.getPageNumber(), pageable.getPageSize());
+        logger.info("[listarByDonoId] - Inicio - Listando animais para dono id = {}", idDono);
 
-        if(!usuarioRepository.existsById(idDono)) {
-            throw new EntityNotFoundException("Dono com id " + idDono + " não encontrado");
+        try {
+
+            if(!usuarioRepository.existsById(idDono)) {
+
+                throw new EntityNotFoundException("Dono com id " + idDono + " não encontrado");
+
+            }
+
+            Page<Animal> animais = animalRepository.findByUsuarioId(idDono, pageable);
+
+            logger.info("[listarByDonoId] - Fim - Encontrados {} animais para o dono com id = {}", animais.getTotalElements(), idDono);
+
+            return animais;
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[listarByDonoId] - Fim - Erro: {}", e.getMessage());
+            throw e;
+
         }
-
-        Page<Animal> animais = animalRepository.findByUsuarioId(idDono, pageable);
-
-        logger.info("[listarByDonoId] - Encontrados {} animais para o dono com id = {}", animais.getTotalElements(), idDono);
-
-        return animais;
     }
 
     /**
@@ -96,10 +140,13 @@ public class AnimalService {
      * @param animal Objeto animal a ser salvo.
      * @return Animal salvo.
      * @throws IllegalArgumentException se dados obrigatórios estiverem ausentes ou inválidos.
+     * @throws EntityNotFoundException se o dono, raça ou sexo associado não for encontrado.
+     * @throws RuntimeException se ocorrer um erro inesperado ao salvar.
      */
+    @Transactional
     public Animal salvar(Animal animal) {
 
-        logger.info("[salvar] - Iniciando salvamento de novo animal");
+        logger.info("[salvar] - Inicio - Tentativa de salvar um novo animal.");
 
         try {
 
@@ -107,18 +154,23 @@ public class AnimalService {
 
             Animal animalSalvo = animalRepository.save(animal);
 
-            logger.info("[salvar] - Animal salvo com id = {}", animalSalvo.getId());
+            // emailSender.enviarInformacaoCadastroAnimalEmail(animal, false);
+
+            logger.info("[salvar] - Fim - Animal salvo com sucesso com o id = {}", animalSalvo.getId());
 
             return animalSalvo;
 
         } catch (IllegalArgumentException | EntityNotFoundException e) {
 
-            logger.error("[salvar] - Erro de validação ao salvar animal: {}", e.getMessage());
-
+            logger.error("[salvar] - Fim - Erro de validação ao salvar animal: {}", e.getMessage());
             throw e;
 
-        }
+        } catch (Exception e) {
 
+            logger.error("[salvar] - Fim - Erro inesperado ao salvar animal: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar animal", e);
+
+        }
     }
 
     /**
@@ -126,35 +178,43 @@ public class AnimalService {
      *
      * @param animal Objeto animal com dados atualizados.
      * @return Animal atualizado.
-     * @throws EntityNotFoundException se o animal não existir.
+     * @throws EntityNotFoundException se o animal, dono, raça ou sexo não forem encontrados.
      * @throws IllegalArgumentException se os dados para atualização forem inválidos.
+     * @throws RuntimeException se ocorrer um erro inesperado ao atualizar.
      */
+    @Transactional
     public Animal atualizar(Animal animal) {
 
-        logger.info("[atualizar] - Atualizando animal id = {}", animal.getId());
-
-        if (animal.getId() == null || !animalRepository.existsById(animal.getId())) {
-
-            logger.error("[atualizar] - Animal não encontrado para id = {}", animal.getId());
-
-            throw new EntityNotFoundException("Animal não encontrado para atualização.");
-        }
+        logger.info("[atualizar] - Inicio - Tentativa de atualizar o animal com id = {}", animal.getId());
 
         try {
+
+            if (animal.getId() == null || !animalRepository.existsById(animal.getId())) {
+
+                throw new EntityNotFoundException("Animal com id " + animal.getId() + " não encontrado para atualização.");
+
+            }
 
             validarAnimal(animal);
 
             Animal animalAtualizado = animalRepository.save(animal);
 
-            logger.info("[atualizar] - Animal atualizado com sucesso id = {}", animalAtualizado.getId());
+            // emailSender.enviarInformacaoCadastroAnimalEmail(animal, true);
+
+            logger.info("[atualizar] - Fim - Animal com id = {} atualizado com sucesso.", animalAtualizado.getId());
 
             return animalAtualizado;
 
         } catch (IllegalArgumentException | EntityNotFoundException e) {
 
-            logger.error("[atualizar] - Erro de validação ao atualizar animal id = {}: {}", animal.getId(), e.getMessage());
-
+            logger.error("[atualizar] - Fim - Erro de validação ao atualizar animal com id = {}: {}", animal.getId(), e.getMessage());
             throw e;
+
+        } catch (Exception e) {
+
+            logger.error("[atualizar] - Fim - Erro inesperado ao atualizar animal com id = {}: {}", animal.getId(), e.getMessage(), e);
+            throw new RuntimeException("Erro ao atualizar animal", e);
+
         }
     }
 
@@ -163,21 +223,43 @@ public class AnimalService {
      *
      * @param id ID do animal a ser deletado.
      * @throws EntityNotFoundException se o animal não existir.
+     * @throws RuntimeException se ocorrer um erro inesperado ao deletar.
      */
+    @Transactional
     public void deletar(Long id) {
 
-        logger.info("[deletar] - Deletando animal id = {}", id);
+        logger.info("[deletar] - Inicio - Tentativa de deletar o animal com id = {}", id);
 
-        if (!animalRepository.existsById(id)) {
+        try {
 
-            logger.error("[deletar] - Animal não encontrado para id = {}", id);
+            if (!animalRepository.existsById(id)) {
 
-            throw new EntityNotFoundException("Animal não encontrado para exclusão.");
+                throw new EntityNotFoundException("Animal com id " + id + " não encontrado para exclusão.");
+            }
+
+            Animal animal = animalRepository.findById(id).get();
+
+            if(animal.getAgendamentos().size() > 0){
+
+                throw new Exception("Não pode deletar o animal com id " + id + " pois ele possui agendamentos associados");
+
+            }
+
+            animalRepository.deleteById(id);
+
+            logger.info("[deletar] - Fim - Animal com id = {} deletado com sucesso.", id);
+
+        } catch (EntityNotFoundException e) {
+
+            logger.error("[deletar] - Fim - Erro: {}", e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+
+            logger.error("[deletar] - Fim - Erro inesperado ao deletar animal com id = {}: {}", id, e.getMessage(), e);
+            throw new RuntimeException("Erro ao deletar animal", e);
+
         }
-
-        animalRepository.deleteById(id);
-
-        logger.info("[deletar] - Animal deletado com sucesso id = {}", id);
     }
 
     /**
@@ -188,6 +270,8 @@ public class AnimalService {
      * @throws EntityNotFoundException se entidades associadas (dono, raça, sexo) não existirem.
      */
     private void validarAnimal(Animal animal) {
+
+        logger.info("[validarAnimal] - Inicio - Validando dados do animal.");
 
         if (animal == null) {
             throw new IllegalArgumentException("Objeto Animal não pode ser nulo.");
@@ -205,7 +289,6 @@ public class AnimalService {
             throw new IllegalArgumentException("O sexo do animal é obrigatório.");
         }
 
-        // Valida a existência das entidades associadas no banco de dados
         if (!usuarioRepository.existsById(animal.getDono().getId())) {
             throw new EntityNotFoundException("Dono com id " + animal.getDono().getId() + " não foi encontrado.");
         }
@@ -214,6 +297,117 @@ public class AnimalService {
         }
         if (!sexoRepository.existsById(animal.getSexo().getId())) {
             throw new EntityNotFoundException("Sexo com id " + animal.getSexo().getId() + " não foi encontrado.");
+        }
+
+        logger.info("[validarAnimal] - Fim - Validação concluída com sucesso.");
+    }
+
+    /**
+     * Lista todos os sexos dos animais.
+     *
+     * @return List com os sexos dos animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os sexos.
+     */
+    @Transactional(readOnly = true)
+    public List<Sexo> listarSexos() {
+
+        logger.info("[listarSexos] - Inicio - Buscando todos os sexos.");
+
+        try {
+
+            List<Sexo> sexos = sexoRepository.findAll();
+
+            logger.info("[listarSexos] - Fim - Busca concluída. Encontrados {} sexos.", sexos.size());
+
+            return sexos;
+
+        } catch (Exception e) {
+
+            logger.error("[listarSexos] - Fim - Erro inesperado ao listar sexos: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar sexos", e);
+
+        }
+    }
+
+    /**
+     * Lista as raças da espécie com determinado ID.
+     *
+     * @param idEspecie ID da especie para buscar as raças.
+     * @return List com as raças dos animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar as raças.
+     */
+    @Transactional(readOnly = true)
+    public List<Raca> listarRacasByIdEspecie(Integer idEspecie) {
+
+        logger.info("[listarRacasByIdEspecie] - Inicio - Listando raças da especie com id = {}", idEspecie);
+
+        try {
+
+            List<Raca> racas = racaRepository.findByEspecie(idEspecie);
+
+            logger.info("[listarRacasByIdEspecie] - Fim - Encontrados {} raças para a especie com id = {}.", racas.size(), idEspecie);
+
+            return racas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRacasByIdEspecie] - Fim - Erro inesperado ao listar raças: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar raças", e);
+
+        }
+    }
+
+    /**
+     * Lista todas as raças de animais.
+     *
+     * @return List com as raças dos animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar as raças.
+     */
+    @Transactional(readOnly = true)
+    public List<Raca> listarRacas() {
+
+        logger.info("[listarRacas] - Inicio - Listando raças");
+
+        try {
+
+            List<Raca> racas = racaRepository.findAll();
+
+            logger.info("[listarRacas] - Fim - Encontrados {} raças.", racas.size());
+
+            return racas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRacas] - Fim - Erro inesperado ao listar raças: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar raças", e);
+
+        }
+    }
+
+
+    /**
+     * Lista todas as espécies dos animais.
+     *
+     * @return List com as espécies dos animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar as espécies.
+     */
+    public List<Especie> listarEspecies() {
+
+        logger.info("[listarEspecies] - Inicio - Buscando todas as espécies.");
+
+        try {
+
+            List<Especie> especies = especieRepository.findAll();
+
+            logger.info("[listarEspecies] - Fim - Busca concluída. Encontradas {} espécies.", especies.size());
+
+            return especies;
+
+        } catch (Exception e) {
+
+            logger.error("[listarEspecies] - Fim - Erro inesperado ao listar espécies: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar espécies", e);
+
         }
     }
 }

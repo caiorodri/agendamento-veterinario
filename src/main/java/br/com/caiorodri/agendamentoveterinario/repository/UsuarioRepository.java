@@ -20,17 +20,39 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 	public boolean existsByCpf(String cpf);
 
 	public boolean existsByEmail(String email);
-	
-	@Query("SELECT u FROM Usuario u " +
-		   "LEFT JOIN FETCH u.perfil p " +
-		   "WHERE u.email = ?1 AND u.senha = ?2 " + 
-		   "AND u.status.id = 1")
-	public Optional<Usuario> findByEmailAndSenha(String email, String senha);
+
+    @Query("SELECT u FROM Usuario u " +
+            "LEFT JOIN FETCH u.perfil perfil " +
+            "LEFT JOIN FETCH u.status status " +
+            "LEFT JOIN FETCH u.telefones telefones " +
+            "WHERE u.email = ?1")
+    public Optional<Usuario> findByEmail(String email);
 
 	@Query("SELECT u FROM Usuario u " +
-			"LEFT JOIN FETCH u.perfil p " +
+			"LEFT JOIN FETCH u.perfil perfil " +
+            "LEFT JOIN FETCH u.status status " +
+            "LEFT JOIN FETCH u.telefones telefones " +
+            "LEFT JOIN FETCH u.animais " +
 			"WHERE u.email = ?1")
-	public Optional<Usuario> findByEmail(String email);
+	public Optional<Usuario> findByEmailWithSets(String email);
+
+    @Query("SELECT u FROM Usuario u " +
+            "LEFT JOIN FETCH u.perfil perfil " +
+            "LEFT JOIN FETCH u.status status " +
+            "LEFT JOIN FETCH u.telefones telefones " +
+            "LEFT JOIN FETCH u.animais " +
+            "WHERE u.id = ?1")
+    public Optional<Usuario> findByIdWithSets(Long id);
+
+    @Query("SELECT u FROM Usuario u " +
+            "LEFT JOIN FETCH u.agendamentos ag " +
+            "LEFT JOIN FETCH ag.animal " +
+            "LEFT JOIN FETCH ag.veterinario " +
+            "LEFT JOIN FETCH ag.recepcionista " +
+            "LEFT JOIN FETCH ag.status " +
+            "LEFT JOIN FETCH ag.tipo " +
+            "WHERE u.id = ?1")
+    public Optional<Usuario> findByIdWithAgendamentos(Long id);
 	
 	@Query("SELECT u FROM Usuario u " +
 		   "LEFT JOIN FETCH u.status s " +
@@ -39,8 +61,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 	
 	@Query("SELECT u FROM Usuario u " +
 		   "LEFT JOIN FETCH u.status s " +
-		   "WHERE u.perfil.id = 1")
-	public List<Usuario> findClientes();	
+		   "WHERE u.perfil.id = 1 " +
+           "AND s.id = 1")
+	public List<Usuario> findClientesAtivos();
 	
 	@Query("SELECT u FROM Usuario u " +
 			   "LEFT JOIN FETCH u.status s " +

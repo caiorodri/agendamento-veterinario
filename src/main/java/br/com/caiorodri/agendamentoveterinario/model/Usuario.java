@@ -1,34 +1,24 @@
 package br.com.caiorodri.agendamentoveterinario.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
+@ToString(exclude = {"animais", "agendamentos", "telefones"})
 @EqualsAndHashCode(of = "id")
-public class Usuario {
+public class Usuario implements UserDetails {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,11 +56,12 @@ public class Usuario {
 	private Perfil perfil;
 	
 	@OneToMany(mappedBy = "dono", fetch = FetchType.LAZY)
-    @JsonManagedReference
-	private List<Animal> animais;
+    @JsonManagedReference("usuario-animal")
+	private Set<Animal> animais;
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("cliente-agendamento")
+	@OrderBy("dataAgendamentoInicio DESC")
 	private List<Agendamento> agendamentos;
 	
 	@ElementCollection
@@ -79,15 +70,20 @@ public class Usuario {
 	    joinColumns = @JoinColumn(name = "id_usuario")
 	)
 	@Column(name = "telefone")
-	private List<String> telefones;
+	private Set<String> telefones;
 
 	@Column(name = "email_realizar_consulta_recebido")
 	private boolean emailRealizarConsultaRecebido;
-	
+
+    @Column(name = "receber_email")
+    private boolean receberEmail;
+
 	public Usuario() {
 		
 		this.endereco = new Endereco();
-		this.telefones = new ArrayList<>();
+		this.telefones = new HashSet<>();
+        this.animais = new HashSet<>();
+        this.agendamentos = new ArrayList<>();
 		this.status = new Status();
 		this.perfil = new Perfil();
 		
@@ -98,5 +94,45 @@ public class Usuario {
 		this.id = id;
 		
 	}
-	
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.perfil != null) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.perfil.getNome().toUpperCase()));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.status != null && this.status.getNome().equalsIgnoreCase("Ativo");
+    }
+
+
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.status != null && this.status.getNome().equalsIgnoreCase("Ativo");
+    }
+
 }

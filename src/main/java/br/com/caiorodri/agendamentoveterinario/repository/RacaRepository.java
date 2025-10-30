@@ -14,5 +14,9 @@ public interface RacaRepository extends JpaRepository<Raca, Integer>{
 	@Query("SELECT r FROM Raca r " +
 		   "WHERE r.especie.id = ?1")
 	public List<Raca> findByEspecie(Integer idEspecie);
-	
+
+    @Query("SELECT r FROM Raca r " +
+           "INNER JOIN r.especie e ")
+    public List<Raca> findAll();
+
 }

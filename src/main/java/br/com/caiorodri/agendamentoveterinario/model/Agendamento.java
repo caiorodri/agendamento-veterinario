@@ -12,15 +12,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = {"animal", "cliente", "veterinario", "recepcionista"})
 public class Agendamento {
 
 	@Id
@@ -29,19 +29,19 @@ public class Agendamento {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_animal")
-    @JsonBackReference
+    @JsonBackReference("animal-agendamento")
 	private Animal animal;
 	
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_cliente")
-    @JsonBackReference
+    @JsonBackReference("cliente-agendamento")
 	private Usuario cliente;
 	
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_veterinario")
 	private Usuario veterinario;
 	
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_recepcionista")
 	private Usuario recepcionista;
 
