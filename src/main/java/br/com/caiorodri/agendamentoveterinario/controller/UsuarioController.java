@@ -215,7 +215,11 @@ public class UsuarioController {
                     content = @Content(schema = @Schema(implementation = Usuario.class))
             ),
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso"),
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Usuário atualizado com sucesso",
+                            content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))
+                    ),
                     @ApiResponse(responseCode = "400", description = "Dados inválidos para atualização"),
                     @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
                     @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
@@ -223,17 +227,19 @@ public class UsuarioController {
             }
     )
     @PutMapping
-    public ResponseEntity<UsuarioDTO> atualizar(@RequestBody Usuario usuario){
+    public ResponseEntity<LoginResponseDTO> atualizar(@RequestBody Usuario usuario){
 
         logger.info("[atualizar] - Início");
 
         Usuario usuarioAtualizado = usuarioService.atualizar(usuario);
 
+        var novoToken = tokenService.generateToken(usuarioAtualizado);
+
         UsuarioDTO usuarioDto = mapper.usuarioToDto(usuarioAtualizado);
 
         logger.info("[atualizar] - Fim");
 
-        return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
+        return new ResponseEntity<>(new LoginResponseDTO(novoToken, usuarioDto), HttpStatus.OK);
     }
 
     @Operation(
