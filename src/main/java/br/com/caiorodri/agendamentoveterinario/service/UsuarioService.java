@@ -672,42 +672,42 @@ public class UsuarioService {
      * Envia um aviso de campanha de vacinação para cada usuário por email.
      * O processo continua mesmo que o envio para um usuário falhe.
      */
-//    @Transactional(readOnly = true)
-//    public void enviarEmailClientesCampanhaVacinacao() {
-//
-//        logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");
-//
-//        try {
-//
-//            List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
-//            logger.info("[enviarEmailClientesCampanhaVacinacao] - Encontrados {} clientes ativos.", usuarios.size());
-//
-//            for(Usuario usuario : usuarios) {
-//
-//                try {
-//
-//                    if(usuario.isReceberEmail()) {
-//
-//                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
-////                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
-//
-//                    } else {
-//
-//                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Usuário id {} não optou por receber emails.", usuario.getId());
-//
-//                    }
-//
-//                } catch (Exception e) {
-//
-//                    logger.error("[enviarEmailClientesCampanhaVacinacao] - Falha ao enviar email de campanha para o usuário id {}: {}", usuario.getId(), e.getMessage());
-//                }
-//            }
-//            logger.info("[enviarEmailClientesCampanhaVacinacao] - Fim - Processo de envio de campanha concluído.");
-//
-//        } catch (Exception e) {
-//
-//            logger.error("[enviarEmailClientesCampanhaVacinacao] - Fim - Erro crítico ao buscar usuários para campanha: {}", e.getMessage(), e);
-//
-//        }
-//    }
+    @Transactional(readOnly = true)
+    public void enviarEmailClientesCampanhaVacinacao() {
+
+        logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");
+
+        try {
+
+            List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
+            logger.info("[enviarEmailClientesCampanhaVacinacao] - Encontrados {} clientes ativos.", usuarios.size());
+
+            for(Usuario usuario : usuarios) {
+
+                try {
+
+                    if(usuario.isReceberEmail()) {
+
+                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
+//                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+
+                    } else {
+
+                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Usuário id {} não optou por receber emails.", usuario.getId());
+
+                    }
+
+                } catch (Exception e) {
+
+                    logger.error("[enviarEmailClientesCampanhaVacinacao] - Falha ao enviar email de campanha para o usuário id {}: {}", usuario.getId(), e.getMessage());
+                }
+            }
+            logger.info("[enviarEmailClientesCampanhaVacinacao] - Fim - Processo de envio de campanha concluído.");
+
+        } catch (Exception e) {
+
+            logger.error("[enviarEmailClientesCampanhaVacinacao] - Fim - Erro crítico ao buscar usuários para campanha: {}", e.getMessage(), e);
+
+        }
+    }
 }
