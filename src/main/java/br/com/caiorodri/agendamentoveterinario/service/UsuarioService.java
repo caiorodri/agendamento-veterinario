@@ -39,6 +39,8 @@ public class UsuarioService {
 
     final static Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
+    final String NOME_RECEPCIONISTA_AUTO_ATENDIMENTO = "AUTO ATENDIMENTO";
+
     /**
      * Recupera um usuário pelo seu ID.
      *
@@ -452,6 +454,45 @@ public class UsuarioService {
             logger.info("[listarRecepcionistas] - Fim - Busca concluída. Encontrados {} recepcionistas.", listaRecepcionistas.size());
 
             return listaRecepcionistas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRecepcionistas] - Fim - Erro inesperado ao listar recepcionistas: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar recepcionistas", e);
+
+        }
+    }
+
+    /**
+     * Retorna usuário com perfil de recepcionista e com nome AUTO ATENDIMENTO.
+     *
+     * @return Usuario.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os recepcionistas.
+     */
+    @Transactional(readOnly = true)
+    public Usuario recuperarRecepcionistaAutoAtendimento() {
+
+        logger.info("[recuperarRecepcionistaAutoAtendimento] - Inicio - Buscando recepcionista de auto atendimento.");
+
+        try {
+
+            List<Usuario> listaRecepcionistas = usuarioRepository.findRecepcionista();
+
+            for(Usuario recepcionista : listaRecepcionistas){
+
+                if(recepcionista.getNome().equals(NOME_RECEPCIONISTA_AUTO_ATENDIMENTO)){
+
+                    logger.info("[recuperarRecepcionistaAutoAtendimento] - Fim - Busca concluída. Recepcionista AUTO ATENDIMENTO encontrado com sucesso");
+
+                    return recepcionista;
+
+                }
+
+            }
+
+            logger.warn("[recuperarRecepcionistaAutoAtendimento] - Fim - Recepcionista AUTO ATENDIMENTO não encontrado");
+
+            return null;
 
         } catch (Exception e) {
 
