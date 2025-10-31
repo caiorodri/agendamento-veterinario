@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.Estado;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
 import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
 import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
@@ -29,8 +31,8 @@ public class UsuarioService {
     @Autowired
     private StatusRepository statusRepository;
 
-    // @Autowired
-    // private EmailSender emailSender;
+//    @Autowired
+//    private EmailSender emailSender;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -126,49 +128,6 @@ public class UsuarioService {
         }
     }
 
-//    /**
-//     * Autentica um usuário com base no email e senha.
-//     *
-//     * @param usuarioRequest DTO com credenciais de login.
-//     * @return Usuário autenticado.
-//     * @throws SecurityException caso as credenciais sejam inválidas.
-//     * @throws RuntimeException se ocorrer um erro inesperado.
-//     */
-//    public Usuario autenticar(UsuarioRequestDTO usuarioRequest) {
-//
-//        logger.info("[autenticar] - Inicio - Tentativa de autenticação para o email = {}", usuarioRequest.getEmail());
-//
-//        try {
-//
-//            Usuario usuario = usuarioRepository.findByEmail(usuarioRequest.getEmail())
-//                    .orElseThrow(() -> new SecurityException("Credenciais inválidas"));
-//
-//            usuario = usuarioRepository.findByIdWithAgendamentos(usuario.getId()).get();
-//
-//            if (passwordEncoder.matches(usuarioRequest.getSenha(), usuario.getSenha())) {
-//
-//                logger.info("[autenticar] - Fim - Usuário autenticado com sucesso: {}", usuario.getEmail());
-//                return usuario;
-//
-//            } else {
-//
-//                throw new SecurityException("Credenciais inválidas");
-//
-//            }
-//
-//        } catch (SecurityException e) {
-//
-//            logger.warn("[autenticar] - Fim - Falha na autenticação para o email {}: {}", usuarioRequest.getEmail(), e.getMessage());
-//            throw e;
-//
-//        } catch (Exception e) {
-//
-//            logger.error("[autenticar] - Fim - Erro inesperado ao autenticar {}: {}", usuarioRequest.getEmail(), e.getMessage(), e);
-//            throw new RuntimeException("Erro no processo de autenticação", e);
-//
-//        }
-//    }
-
     /**
      * Salva um novo usuário no banco de dados.
      *
@@ -191,7 +150,7 @@ public class UsuarioService {
 
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-            // emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
+//            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
             logger.info("[salvar] - Fim - Usuário salvo com sucesso com o id = {}", usuarioSalvo.getId());
 
@@ -448,6 +407,170 @@ public class UsuarioService {
     }
 
     /**
+     * Lista todos os clientes com paginação.
+     *
+     * @param pageable Dados de paginação.
+     * @return Page com clientes.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os clientes.
+     */
+    @Transactional(readOnly = true)
+    public Page<Usuario> listarClientes(Pageable pageable) {
+
+        logger.info("[listarClientes] - Inicio - Listando clientes: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+
+        try {
+
+            Page<Usuario> clientes = usuarioRepository.findClientes(pageable);
+
+            logger.info("[listarClientes] - Fim - Encontrados {} clientes no total.", clientes.getTotalElements());
+
+            return clientes;
+
+        } catch (Exception e) {
+
+            logger.error("[listarClientes] - Fim - Erro inesperado ao listar clientes: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar clientes", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os usuários com perfil de recepcionista.
+     *
+     * @return List com recepcionistas.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os recepcionistas.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarRecepcionistas() {
+
+        logger.info("[listarRecepcionistas] - Inicio - Buscando todos os recepcionistas.");
+
+        try {
+
+            List<Usuario> listaRecepcionistas = usuarioRepository.findRecepcionista();
+
+            logger.info("[listarRecepcionistas] - Fim - Busca concluída. Encontrados {} recepcionistas.", listaRecepcionistas.size());
+
+            return listaRecepcionistas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRecepcionistas] - Fim - Erro inesperado ao listar recepcionistas: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar recepcionistas", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os usuários com perfil de veterinário.
+     *
+     * @return List com veterinários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os veterinários.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarVeterinarios() {
+
+        logger.info("[listarVeterinarios] - Inicio - Buscando todos os veterinários.");
+
+        try {
+
+            List<Usuario> listaVeterinarios = usuarioRepository.findVeterinarios();
+
+            logger.info("[listarVeterinarios] - Fim - Busca concluída. Encontrados {} veterinários.", listaVeterinarios.size());
+
+            return listaVeterinarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarVeterinarios] - Fim - Erro inesperado ao listar veterinários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar veterinários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os funcionários (Recepcionistas e Veterinários) com paginação.
+     *
+     * @param pageable Dados de paginação.
+     * @return Page com funcionários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os funcionários.
+     */
+    @Transactional(readOnly = true)
+    public Page<Usuario> listarFuncionarios(Pageable pageable) {
+
+        logger.info("[listarFuncionarios] - Inicio - Listando funcionários: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+
+        try {
+
+            Page<Usuario> funcionarios = usuarioRepository.findFuncionarios(pageable);
+
+            logger.info("[listarFuncionarios] - Fim - Encontrados {} funcionários no total.", funcionarios.getTotalElements());
+
+            return funcionarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarFuncionarios] - Fim - Erro inesperado ao listar funcionários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar funcionários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os funcionários (Recepcionistas e Veterinários).
+     *
+     * @return List com funcionários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os funcionários.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarFuncionarios() {
+
+        logger.info("[listarFuncionarios] - Inicio - Buscando todos os funcionários.");
+
+        try {
+
+            List<Usuario> listaFuncionarios = usuarioRepository.findFuncionarios();
+
+            logger.info("[listarFuncionarios] - Fim - Busca concluída. Encontrados {} funcionários.", listaFuncionarios.size());
+
+            return listaFuncionarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarFuncionarios] - Fim - Erro inesperado ao listar funcionários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar funcionários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os estados (UF) do Brasil.
+     *
+     * @return List com estados.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os estados.
+     */
+    @Transactional(readOnly = true)
+    public List<Estado> listarEstados() {
+
+        logger.info("[listarEstados] - Inicio - Buscando todos os estados.");
+
+        try {
+
+            List<Estado> listaEstados = usuarioRepository.findEstados();
+
+            logger.info("[listarEstados] - Fim - Busca concluída. Encontrados {} estados.", listaEstados.size());
+
+            return listaEstados;
+
+        } catch (Exception e) {
+
+            logger.error("[listarEstados] - Fim - Erro inesperado ao listar estados: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar estados", e);
+
+        }
+    }
+
+    /**
      * Envia código de recuperação para o usuário por email.
      *
      * @param email Email do destinatário.
@@ -469,7 +592,7 @@ public class UsuarioService {
 
             }
 
-            // emailSender.enviarCodigoEmail(email);
+//            emailSender.enviarCodigoEmail(email);
 
             logger.info("[enviarCodigoEmail] - Fim - Processo de envio de código iniciado para o email: {}", email);
             return true;
@@ -549,42 +672,42 @@ public class UsuarioService {
      * Envia um aviso de campanha de vacinação para cada usuário por email.
      * O processo continua mesmo que o envio para um usuário falhe.
      */
-    @Transactional(readOnly = true)
-    public void enviarEmailClientesCampanhaVacinacao() {
-
-        logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");
-
-        try {
-
-            List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
-            logger.info("[enviarEmailClientesCampanhaVacinacao] - Encontrados {} clientes ativos.", usuarios.size());
-
-            for(Usuario usuario : usuarios) {
-
-                try {
-
-                    if(usuario.isReceberEmail()) {
-
-                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
-                        // emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
-
-                    } else {
-
-                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Usuário id {} não optou por receber emails.", usuario.getId());
-
-                    }
-
-                } catch (Exception e) {
-
-                    logger.error("[enviarEmailClientesCampanhaVacinacao] - Falha ao enviar email de campanha para o usuário id {}: {}", usuario.getId(), e.getMessage());
-                }
-            }
-            logger.info("[enviarEmailClientesCampanhaVacinacao] - Fim - Processo de envio de campanha concluído.");
-
-        } catch (Exception e) {
-
-            logger.error("[enviarEmailClientesCampanhaVacinacao] - Fim - Erro crítico ao buscar usuários para campanha: {}", e.getMessage(), e);
-
-        }
-    }
+//    @Transactional(readOnly = true)
+//    public void enviarEmailClientesCampanhaVacinacao() {
+//
+//        logger.info("[enviarEmailClientesCampanhaVacinacao] - Inicio - Buscando clientes para envio de campanha.");
+//
+//        try {
+//
+//            List<Usuario> usuarios = usuarioRepository.findClientesAtivos();
+//            logger.info("[enviarEmailClientesCampanhaVacinacao] - Encontrados {} clientes ativos.", usuarios.size());
+//
+//            for(Usuario usuario : usuarios) {
+//
+//                try {
+//
+//                    if(usuario.isReceberEmail()) {
+//
+//                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
+////                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+//
+//                    } else {
+//
+//                        logger.info("[enviarEmailClientesCampanhaVacinacao] - Usuário id {} não optou por receber emails.", usuario.getId());
+//
+//                    }
+//
+//                } catch (Exception e) {
+//
+//                    logger.error("[enviarEmailClientesCampanhaVacinacao] - Falha ao enviar email de campanha para o usuário id {}: {}", usuario.getId(), e.getMessage());
+//                }
+//            }
+//            logger.info("[enviarEmailClientesCampanhaVacinacao] - Fim - Processo de envio de campanha concluído.");
+//
+//        } catch (Exception e) {
+//
+//            logger.error("[enviarEmailClientesCampanhaVacinacao] - Fim - Erro crítico ao buscar usuários para campanha: {}", e.getMessage(), e);
+//
+//        }
+//    }
 }
