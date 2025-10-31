@@ -57,7 +57,8 @@ public class Usuario implements UserDetails {
 	
 	@OneToMany(mappedBy = "dono", fetch = FetchType.LAZY)
     @JsonManagedReference("usuario-animal")
-	private Set<Animal> animais;
+    @OrderBy("id ASC")
+	private List<Animal> animais;
 	
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
     @JsonManagedReference("cliente-agendamento")
@@ -82,7 +83,7 @@ public class Usuario implements UserDetails {
 		
 		this.endereco = new Endereco();
 		this.telefones = new HashSet<>();
-        this.animais = new HashSet<>();
+        this.animais = new ArrayList<>();
         this.agendamentos = new ArrayList<>();
 		this.status = new Status();
 		this.perfil = new Perfil();
