@@ -470,6 +470,36 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Buscar recepcionista de autoatendimento",
+            description = "Retorna o usuário de sistema 'AUTO ATENDIMENTO' usado para agendamentos online.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "404", description = "Usuário de autoatendimento não configurado ou não encontrado"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/recepcionista/auto-atendimento")
+    public ResponseEntity<UsuarioDTO> recuperarRecepcionistaAutoAtendimento() {
+
+        logger.info("[recuperarRecepcionistaAutoAtendimento] - Início");
+
+        Usuario usuario = usuarioService.recuperarRecepcionistaAutoAtendimento();
+
+        if (usuario == null) {
+
+            logger.warn("[recuperarRecepcionistaAutoAtendimento] - Fim - Usuário de autoatendimento não encontrado.");
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        }
+
+        UsuarioDTO usuarioDto = mapper.usuarioToDto(usuario);
+
+        logger.info("[recuperarRecepcionistaAutoAtendimento] - Fim");
+
+        return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Listar veterinários",
             description = "Retorna uma lista de todos os usuários com perfil de VETERINARIO. (Acessível por qualquer usuário autenticado)",
             responses = {
