@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
+import br.com.caiorodri.agendamentoveterinario.model.Estado;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
 import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
 import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
@@ -401,6 +402,170 @@ public class UsuarioService {
 
             logger.error("[listarStatus] - Fim - Erro inesperado ao listar status: {}", e.getMessage(), e);
             throw new RuntimeException("Erro ao listar status", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os clientes com paginação.
+     *
+     * @param pageable Dados de paginação.
+     * @return Page com clientes.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os clientes.
+     */
+    @Transactional(readOnly = true)
+    public Page<Usuario> listarClientes(Pageable pageable) {
+
+        logger.info("[listarClientes] - Inicio - Listando clientes: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+
+        try {
+
+            Page<Usuario> clientes = usuarioRepository.findClientes(pageable);
+
+            logger.info("[listarClientes] - Fim - Encontrados {} clientes no total.", clientes.getTotalElements());
+
+            return clientes;
+
+        } catch (Exception e) {
+
+            logger.error("[listarClientes] - Fim - Erro inesperado ao listar clientes: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar clientes", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os usuários com perfil de recepcionista.
+     *
+     * @return List com recepcionistas.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os recepcionistas.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarRecepcionistas() {
+
+        logger.info("[listarRecepcionistas] - Inicio - Buscando todos os recepcionistas.");
+
+        try {
+
+            List<Usuario> listaRecepcionistas = usuarioRepository.findRecepcionista();
+
+            logger.info("[listarRecepcionistas] - Fim - Busca concluída. Encontrados {} recepcionistas.", listaRecepcionistas.size());
+
+            return listaRecepcionistas;
+
+        } catch (Exception e) {
+
+            logger.error("[listarRecepcionistas] - Fim - Erro inesperado ao listar recepcionistas: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar recepcionistas", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os usuários com perfil de veterinário.
+     *
+     * @return List com veterinários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os veterinários.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarVeterinarios() {
+
+        logger.info("[listarVeterinarios] - Inicio - Buscando todos os veterinários.");
+
+        try {
+
+            List<Usuario> listaVeterinarios = usuarioRepository.findVeterinarios();
+
+            logger.info("[listarVeterinarios] - Fim - Busca concluída. Encontrados {} veterinários.", listaVeterinarios.size());
+
+            return listaVeterinarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarVeterinarios] - Fim - Erro inesperado ao listar veterinários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar veterinários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os funcionários (Recepcionistas e Veterinários) com paginação.
+     *
+     * @param pageable Dados de paginação.
+     * @return Page com funcionários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os funcionários.
+     */
+    @Transactional(readOnly = true)
+    public Page<Usuario> listarFuncionarios(Pageable pageable) {
+
+        logger.info("[listarFuncionarios] - Inicio - Listando funcionários: página = {}, tamanho = {}", pageable.getPageNumber(), pageable.getPageSize());
+
+        try {
+
+            Page<Usuario> funcionarios = usuarioRepository.findFuncionarios(pageable);
+
+            logger.info("[listarFuncionarios] - Fim - Encontrados {} funcionários no total.", funcionarios.getTotalElements());
+
+            return funcionarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarFuncionarios] - Fim - Erro inesperado ao listar funcionários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar funcionários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os funcionários (Recepcionistas e Veterinários).
+     *
+     * @return List com funcionários.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os funcionários.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarFuncionarios() {
+
+        logger.info("[listarFuncionarios] - Inicio - Buscando todos os funcionários.");
+
+        try {
+
+            List<Usuario> listaFuncionarios = usuarioRepository.findFuncionarios();
+
+            logger.info("[listarFuncionarios] - Fim - Busca concluída. Encontrados {} funcionários.", listaFuncionarios.size());
+
+            return listaFuncionarios;
+
+        } catch (Exception e) {
+
+            logger.error("[listarFuncionarios] - Fim - Erro inesperado ao listar funcionários: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar funcionários", e);
+
+        }
+    }
+
+    /**
+     * Lista todos os estados (UF) do Brasil.
+     *
+     * @return List com estados.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os estados.
+     */
+    @Transactional(readOnly = true)
+    public List<Estado> listarEstados() {
+
+        logger.info("[listarEstados] - Inicio - Buscando todos os estados.");
+
+        try {
+
+            List<Estado> listaEstados = usuarioRepository.findEstados();
+
+            logger.info("[listarEstados] - Fim - Busca concluída. Encontrados {} estados.", listaEstados.size());
+
+            return listaEstados;
+
+        } catch (Exception e) {
+
+            logger.error("[listarEstados] - Fim - Erro inesperado ao listar estados: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar estados", e);
 
         }
     }

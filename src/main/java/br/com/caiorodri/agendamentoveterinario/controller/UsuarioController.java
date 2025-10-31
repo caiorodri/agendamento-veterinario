@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.caiorodri.agendamentoveterinario.dto.UsuarioDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.UsuarioRequestDTO;
+import br.com.caiorodri.agendamentoveterinario.model.Estado;
 import br.com.caiorodri.agendamentoveterinario.mapper.Mapper;
 import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 import br.com.caiorodri.agendamentoveterinario.service.UsuarioService;
@@ -411,6 +412,158 @@ public class UsuarioController {
         logger.info("[getUsuarioLogado] - Fim");
 
         return new ResponseEntity<>(usuarioDto, HttpStatus.OK);
+
+    }
+
+    @Operation(
+            summary = "Listar clientes (paginado)",
+            description = "Retorna uma lista paginada de usuários com perfil de CLIENTE. (Requer perfil: ADMINISTRADOR, RECEPCIONISTA ou VETERINARIO)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/clientes")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
+    public ResponseEntity<Page<UsuarioDTO>> listarClientes(
+            @Parameter(description = "Número da página (inicia em 0)", required = true, example = "0") @RequestParam("pagina") int pagina,
+            @Parameter(description = "Quantidade de itens por página", required = true, example = "10") @RequestParam("quantidadeItens") int quantidadeItens) {
+
+        logger.info("[listarClientes] - Início");
+
+        Pageable pageable = PageRequest.of(pagina, quantidadeItens);
+
+        Page<Usuario> clientes = usuarioService.listarClientes(pageable);
+
+        Page<UsuarioDTO> clientesDto = new PageImpl<>(mapper.usuarioListToDtoList(clientes.getContent()), clientes.getPageable(), clientes.getTotalElements());
+
+        logger.info("[listarClientes] - Fim");
+
+        return new ResponseEntity<>(clientesDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar recepcionistas",
+            description = "Retorna uma lista de todos os usuários com perfil de RECEPCIONISTA. (Requer perfil: ADMINISTRADOR ou RECEPCIONISTA)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/recepcionistas")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<List<UsuarioDTO>> listarRecepcionistas() {
+
+        logger.info("[listarRecepcionistas] - Início");
+
+        List<Usuario> recepcionistas = usuarioService.listarRecepcionistas();
+
+        List<UsuarioDTO> recepcionistasDto = mapper.usuarioListToDtoList(recepcionistas);
+
+        logger.info("[listarRecepcionistas] - Fim");
+
+        return new ResponseEntity<>(recepcionistasDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar veterinários",
+            description = "Retorna uma lista de todos os usuários com perfil de VETERINARIO. (Acessível por qualquer usuário autenticado)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/veterinarios")
+    public ResponseEntity<List<UsuarioDTO>> listarVeterinarios() {
+
+        logger.info("[listarVeterinarios] - Início");
+
+        List<Usuario> veterinarios = usuarioService.listarVeterinarios();
+
+        List<UsuarioDTO> veterinariosDto = mapper.usuarioListToDtoList(veterinarios);
+
+        logger.info("[listarVeterinarios] - Fim");
+
+        return new ResponseEntity<>(veterinariosDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar funcionários (paginado)",
+            description = "Retorna uma lista paginada de VETERINARIOS e RECEPCIONISTAS. (Requer perfil: ADMINISTRADOR ou RECEPCIONISTA)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/funcionarios")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<Page<UsuarioDTO>> listarFuncionarios(
+            @Parameter(description = "Número da página (inicia em 0)", required = true, example = "0") @RequestParam("pagina") int pagina,
+            @Parameter(description = "Quantidade de itens por página", required = true, example = "10") @RequestParam("quantidadeItens") int quantidadeItens) {
+
+        logger.info("[listarFuncionarios] - Início");
+
+        Pageable pageable = PageRequest.of(pagina, quantidadeItens);
+
+        Page<Usuario> funcionarios = usuarioService.listarFuncionarios(pageable);
+
+        Page<UsuarioDTO> funcionariosDto = new PageImpl<>(mapper.usuarioListToDtoList(funcionarios.getContent()), funcionarios.getPageable(), funcionarios.getTotalElements());
+
+        logger.info("[listarFuncionarios] - Fim");
+
+        return new ResponseEntity<>(funcionariosDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar todos os funcionários",
+            description = "Retorna uma lista completa de VETERINARIOS e RECEPCIONISTAS. (Requer perfil: ADMINISTRADOR ou RECEPCIONISTA)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/funcionarios/todos")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<List<UsuarioDTO>> listarFuncionariosTodos() {
+
+        logger.info("[listarFuncionariosTodos] - Início");
+
+        List<Usuario> funcionarios = usuarioService.listarFuncionarios();
+
+        List<UsuarioDTO> funcionariosDto = mapper.usuarioListToDtoList(funcionarios);
+
+        logger.info("[listarFuncionariosTodos] - Fim");
+
+        return new ResponseEntity<>(funcionariosDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar estados (UFs)",
+            description = "Retorna uma lista de todos os estados do Brasil para uso em formulários. (Endpoint público)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/estados")
+    public ResponseEntity<List<Estado>> listarEstados() {
+
+        logger.info("[listarEstados] - Início");
+
+        List<Estado> estados = usuarioService.listarEstados();
+
+        logger.info("[listarEstados] - Fim");
+
+        return new ResponseEntity<>(estados, HttpStatus.OK);
     }
 
 }
