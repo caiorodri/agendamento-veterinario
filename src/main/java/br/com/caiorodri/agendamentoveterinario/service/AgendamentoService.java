@@ -1,5 +1,6 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
@@ -7,6 +8,7 @@ import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
 import br.com.caiorodri.agendamentoveterinario.model.Status;
 import br.com.caiorodri.agendamentoveterinario.repository.*;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,6 +154,8 @@ public class AgendamentoService {
 
             validarAgendamento(agendamento);
 
+            agendamento.setDataCriacao(LocalDateTime.now());
+
             Agendamento agendamentoSalvo = agendamentoRepository.save(agendamento);
 
             //emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
@@ -182,6 +186,7 @@ public class AgendamentoService {
      * @throws IllegalArgumentException se estiver algum argumento inválido
      * @throws RuntimeException se ocorrer algum erro interno
      */
+    @Transactional
     public Agendamento atualizar(Agendamento agendamento) {
 
         logger.info("[atualizar] - Inicio - Tentativa de atualizar o agendamento com id = {}", agendamento.getId());
@@ -197,7 +202,18 @@ public class AgendamentoService {
 
             validarAgendamento(agendamento);
 
-            Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
+            Agendamento agendamentoSalvo = agendamentoRepository.findById(agendamento.getId()).get();
+
+            agendamentoSalvo.setAnimal(agendamento.getAnimal());
+            agendamentoSalvo.setVeterinario(agendamento.getVeterinario());
+            agendamentoSalvo.setDescricao(agendamento.getDescricao());
+            agendamentoSalvo.setTipo(agendamento.getTipo());
+            agendamentoSalvo.setStatus(agendamento.getStatus());
+            agendamentoSalvo.setDataCriacao(LocalDateTime.now());
+
+            agendamentoRepository.saveAndFlush(agendamentoSalvo);
+
+            Agendamento agendamentoAtualizado = agendamentoRepository.findById(agendamento.getId()).get();
 
             // emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
 

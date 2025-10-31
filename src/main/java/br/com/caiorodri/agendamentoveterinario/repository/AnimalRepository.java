@@ -18,10 +18,6 @@ public interface AnimalRepository extends JpaRepository<Animal, Long>{
 		   "LEFT JOIN FETCH a.dono d ")
 	public Page<Animal> findAll(Pageable pageable);
 	
-	@Query("SELECT DISTINCT a FROM Animal a " +
-		   "WHERE a.dono.id = ?1")
-	public Page<Animal> findByCliente(Long idCliente, Pageable pageable);
-	
 	@Query("SELECT a FROM Animal a " +
 			"LEFT JOIN FETCH a.dono " +
 			"LEFT JOIN FETCH a.raca " +
