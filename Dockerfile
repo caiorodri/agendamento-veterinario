@@ -10,7 +10,7 @@ COPY src ./src
 
 RUN mvn clean install -DskipTests
 
-FROM openjdk:21-slim
+FROM openjdk:21-slim-bookworm
 
 WORKDIR /app
 
