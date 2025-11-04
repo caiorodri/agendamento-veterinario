@@ -53,6 +53,8 @@ public class Animal {
 	@JoinColumn(name = "id_dono")
     @JsonBackReference("usuario-animal")
 	private Usuario dono;
+
+    private String urlImagem;
 	
 	public Animal(Long id) {
 		

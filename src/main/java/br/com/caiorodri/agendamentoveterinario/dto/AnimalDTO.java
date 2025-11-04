@@ -37,6 +37,8 @@ public class AnimalDTO {
 	private UsuarioSimplesDTO dono;
 
     private List<AgendamentoDTO> agendamentos;
+
+    private String urlImagem;
 	
 	public AnimalDTO() {
 		

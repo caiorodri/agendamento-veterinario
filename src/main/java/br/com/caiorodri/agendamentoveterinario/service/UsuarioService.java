@@ -206,6 +206,12 @@ public class UsuarioService {
             usuarioExistente.setPerfil(usuario.getPerfil());
             usuarioExistente.setReceberEmail(usuario.isReceberEmail());
 
+            if(usuario.getUrlImagem() != null){
+
+                usuarioExistente.setUrlImagem(usuario.getUrlImagem());
+
+            }
+
             usuarioRepository.saveAndFlush(usuarioExistente);
 
             Usuario usuarioAtualizado = this.recuperar(usuario.getId());

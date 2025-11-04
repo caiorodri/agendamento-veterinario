@@ -314,7 +314,7 @@ public class AgendamentoService {
 
         if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal())) {
 
-            if(agendamento.getId() == null || agendamento.getId() <= 0) { // Novo agendamento com conflito
+            if(agendamento.getId() == null || agendamento.getId() <= 0) {
 
                 logger.error("[verificarConflitoHorario] - Fim - Erro: Conflito de horário detectado para um novo agendamento.");
                 throw new IllegalArgumentException("Já existe um agendamento para esse horário");

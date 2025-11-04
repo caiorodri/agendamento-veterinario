@@ -79,6 +79,8 @@ public class Usuario implements UserDetails {
     @Column(name = "receber_email")
     private boolean receberEmail;
 
+    private String urlImagem;
+
 	public Usuario() {
 		
 		this.endereco = new Endereco();
