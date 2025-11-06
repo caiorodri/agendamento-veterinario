@@ -3,17 +3,8 @@ package br.com.caiorodri.agendamentoveterinario.mapper;
 import java.util.List;
 
 import br.com.caiorodri.agendamentoveterinario.dto.*;
-import br.com.caiorodri.agendamentoveterinario.model.Agendamento;
-import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
-import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
-import br.com.caiorodri.agendamentoveterinario.model.Animal;
-import br.com.caiorodri.agendamentoveterinario.model.Endereco;
-import br.com.caiorodri.agendamentoveterinario.model.Especie;
-import br.com.caiorodri.agendamentoveterinario.model.Perfil;
-import br.com.caiorodri.agendamentoveterinario.model.Raca;
-import br.com.caiorodri.agendamentoveterinario.model.Sexo;
-import br.com.caiorodri.agendamentoveterinario.model.Status;
-import br.com.caiorodri.agendamentoveterinario.model.Usuario;
+import br.com.caiorodri.agendamentoveterinario.model.*;
+import org.mapstruct.Mapping;
 
 @org.mapstruct.Mapper(componentModel = "spring")
 public interface Mapper {
@@ -86,5 +77,14 @@ public interface Mapper {
 
     List<StatusDTO> statusListToDtoList(List<Status> models);
     List<Status> dtoListToStatusList(List<StatusDTO> dtos);
+
+    @Mapping(source = "diaSemana.id", target = "idDiaSemana")
+    VeterinarioHorarioDTO veterinarioHorarioToDto(VeterinarioHorario model);
+
+    @Mapping(source = "idDiaSemana", target = "diaSemana.id")
+    VeterinarioHorario dtoToVeterinarioHorario(VeterinarioHorarioDTO dto);
+
+    List<VeterinarioHorarioDTO> veterinarioHorarioListToDtoList(List<VeterinarioHorario> models);
+    List<VeterinarioHorario> dtoListToVeterinarioHorarioList(List<VeterinarioHorarioDTO> dtos);
 
 }

@@ -1,9 +1,7 @@
 package br.com.caiorodri.agendamentoveterinario.controller;
 
-import br.com.caiorodri.agendamentoveterinario.dto.LoginResponseDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.StatusDTO;
-import br.com.caiorodri.agendamentoveterinario.model.Status;
-import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
+import br.com.caiorodri.agendamentoveterinario.dto.*;
+import br.com.caiorodri.agendamentoveterinario.model.*;
 import br.com.caiorodri.agendamentoveterinario.security.TokenService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,16 +33,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import br.com.caiorodri.agendamentoveterinario.dto.UsuarioDTO;
-import br.com.caiorodri.agendamentoveterinario.dto.UsuarioRequestDTO;
-import br.com.caiorodri.agendamentoveterinario.model.Estado;
 import br.com.caiorodri.agendamentoveterinario.mapper.Mapper;
-import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 import br.com.caiorodri.agendamentoveterinario.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -596,4 +592,55 @@ public class UsuarioController {
         return new ResponseEntity<>(estados, HttpStatus.OK);
     }
 
+    @Operation(
+            summary = "Listar horários de um veterinário",
+            description = "Retorna todos os blocos de horário de trabalho de um veterinário específico. (Requer perfil: ADMINISTRADOR ou RECEPCIONISTA)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão"),
+                    @ApiResponse(responseCode = "404", description = "Veterinário não encontrado")
+            }
+    )
+    @GetMapping("/veterinarios/{id}/horarios")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<List<VeterinarioHorarioDTO>> listarHorariosVeterinario(
+            @Parameter(description = "ID do usuário (veterinário)", required = true) @PathVariable Long id) {
+
+        logger.info("[listarHorariosVeterinario] - Início");
+
+        List<VeterinarioHorario> horarios = usuarioService.listarHorariosVeterinario(id);
+
+        List<VeterinarioHorarioDTO> dtos = mapper.veterinarioHorarioListToDtoList(horarios);
+
+        logger.info("[listarHorariosVeterinario] - Fim");
+
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar slots de horário disponíveis",
+            description = "Retorna uma lista de horários (slots) disponíveis para um veterinário em uma data específica, já filtrando os horários ocupados. (Acessível por qualquer usuário autenticado)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "404", description = "Veterinário não encontrado")
+            }
+    )
+    @GetMapping("/veterinarios/{id}/horarios-disponiveis")
+    public ResponseEntity<List<String>> listarHorariosDisponiveis(
+            @Parameter(description = "ID do usuário (veterinário)", required = true) @PathVariable Long id,
+            @Parameter(description = "Data da consulta (Formato: AAAA-MM-DD)", required = true, example = "2025-11-10")
+            @RequestParam("data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+
+        logger.info("[listarHorariosDisponiveis] - Início");
+
+        final int DURACAO_SLOT = 30;
+
+        List<String> horarios = usuarioService.listarHorariosDisponiveis(id, data, DURACAO_SLOT);
+
+        logger.info("[listarHorariosDisponiveis] - Fim");
+
+        return new ResponseEntity<>(horarios, HttpStatus.OK);
+    }
 }

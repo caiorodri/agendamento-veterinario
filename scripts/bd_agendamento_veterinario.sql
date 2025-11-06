@@ -70,6 +70,7 @@ CREATE TABLE usuario (
     id_perfil INT NOT NULL,
     email_realizar_consulta_recebido BOOLEAN DEFAULT FALSE,
     receber_email BOOLEAN DEFAULT FALSE,
+    url_imagem VARCHAR(1024),
     CONSTRAINT usuario_estado_fk FOREIGN KEY (sigla_estado) REFERENCES estado(sigla),
     CONSTRAINT usuario_status_fk FOREIGN KEY (id_status) REFERENCES usuario_status(id),
     CONSTRAINT usuario_perfil_fk FOREIGN KEY (id_perfil) REFERENCES perfil(id)
@@ -186,6 +187,7 @@ CREATE TABLE IF NOT EXISTS animal (
     peso FLOAT,
     altura FLOAT,
     cor VARCHAR(50),
+    url_imagem VARCHAR(1024),
     CONSTRAINT animal_sexo_fk FOREIGN KEY (id_sexo) REFERENCES animal_sexo(id),
     CONSTRAINT animal_raca_fk FOREIGN KEY (id_raca) REFERENCES animal_raca(id),
     CONSTRAINT animal_usuario_fk FOREIGN KEY (id_dono) REFERENCES usuario(id)
@@ -199,7 +201,8 @@ CREATE TABLE agendamento_status(
 INSERT INTO agendamento_status(id, nome) VALUES
 (1, "Aberto"),
 (2, "Cancelado"),
-(3, "Concluido");
+(3, "Concluido"),
+(4, "Perdido");
 
 CREATE TABLE agendamento_tipo (
 
@@ -228,4 +231,28 @@ CREATE TABLE agendamento (
     CONSTRAINT agendamento_recepcionista_fk FOREIGN KEY (id_recepcionista) REFERENCES usuario(id),
     CONSTRAINT agendamento_agendamento_status_fk FOREIGN KEY (id_agendamento_status) REFERENCES agendamento_status(id),
     CONSTRAINT agendamento_agendamento_tipo_fk FOREIGN KEY (id_agendamento_tipo) REFERENCES agendamento_tipo(id)
+);
+
+CREATE TABLE dia_semana (
+    id INT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL
+);
+
+INSERT INTO dia_semana (id, nome) VALUES
+(1, 'Domingo'),
+(2, 'Segunda-feira'),
+(3, 'Terça-feira'),
+(4, 'Quarta-feira'),
+(5, 'Quinta-feira'),
+(6, 'Sexta-feira'),
+(7, 'Sábado');
+
+CREATE TABLE veterinario_horario (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_veterinario BIGINT NOT NULL,
+    dia_semana INT NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    FOREIGN KEY (id_veterinario) REFERENCES usuario(id),
+    FOREIGN KEY (dia_semana) REFERENCES dia_semana(id)
 );
