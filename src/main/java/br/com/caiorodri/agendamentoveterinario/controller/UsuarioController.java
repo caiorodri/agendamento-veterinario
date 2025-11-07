@@ -631,13 +631,13 @@ public class UsuarioController {
     public ResponseEntity<List<String>> listarHorariosDisponiveis(
             @Parameter(description = "ID do usuário (veterinário)", required = true) @PathVariable Long id,
             @Parameter(description = "Data da consulta (Formato: AAAA-MM-DD)", required = true, example = "2025-11-10")
-            @RequestParam("data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+            @RequestParam("data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            @Parameter(description = "ID do Tipo de Agendamento (Consulta, Cirurgia, etc.)", required = true)
+            @RequestParam("idTipo") Integer idTipo) {
 
         logger.info("[listarHorariosDisponiveis] - Início");
 
-        final int DURACAO_SLOT = 30;
-
-        List<String> horarios = usuarioService.listarHorariosDisponiveis(id, data, DURACAO_SLOT);
+        List<String> horarios = usuarioService.listarHorariosDisponiveis(id, data, idTipo);
 
         logger.info("[listarHorariosDisponiveis] - Fim");
 

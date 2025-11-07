@@ -207,11 +207,12 @@ INSERT INTO agendamento_status(id, nome) VALUES
 CREATE TABLE agendamento_tipo (
 
 	id INT PRIMARY KEY,
-    nome VARCHAR(50)
+    nome VARCHAR(50),
+    duracao_tipo INT DEFAULT 30
 
 );
 
-INSERT INTO agendamento_tipo VALUES (1, 'Consulta'), (2, 'Cirurgia');
+INSERT INTO agendamento_tipo VALUES (1, 'Consulta', 30), (2, 'Cirurgia', 60);
 
 CREATE TABLE agendamento (
 	id BIGINT AUTO_INCREMENT PRIMARY KEY,

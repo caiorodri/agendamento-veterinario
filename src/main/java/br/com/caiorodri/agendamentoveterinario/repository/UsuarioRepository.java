@@ -87,7 +87,4 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 		   "WHERE p.id IN (2,3)")
 	public List<Usuario> findFuncionarios();
 	
-	@Query("SELECT e FROM Estado e")
-	public List<Estado> findEstados();
-	
 }

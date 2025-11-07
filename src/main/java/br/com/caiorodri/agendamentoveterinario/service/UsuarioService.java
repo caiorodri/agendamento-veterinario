@@ -12,9 +12,7 @@ import java.util.stream.Collectors;
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
 import br.com.caiorodri.agendamentoveterinario.enums.DiaSemanaEnum;
 import br.com.caiorodri.agendamentoveterinario.model.*;
-import br.com.caiorodri.agendamentoveterinario.repository.AgendamentoRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
-import br.com.caiorodri.agendamentoveterinario.repository.VeterinarioHorarioRepository;
+import br.com.caiorodri.agendamentoveterinario.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,11 +45,17 @@ public class UsuarioService {
     @Autowired
     private AgendamentoRepository agendamentoRepository;
 
+    @Autowired
+    private AgendamentoTipoRepository agendamentoTipoRepository;
+
+    @Autowired
+    private EstadoRepository estadoRepository;
+
     final static Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
     final String NOME_RECEPCIONISTA_AUTO_ATENDIMENTO = "AUTO ATENDIMENTO";
 
-    final Integer ID_VETERINARIO = 2;
+    final Integer ID_VETERINARIO = 3;
 
     /**
      * Recupera um usuário pelo seu ID.
@@ -616,7 +619,7 @@ public class UsuarioService {
 
         try {
 
-            List<Estado> listaEstados = usuarioRepository.findEstados();
+            List<Estado> listaEstados = estadoRepository.findEstados();
 
             logger.info("[listarEstados] - Fim - Busca concluída. Encontrados {} estados.", listaEstados.size());
 
@@ -791,8 +794,13 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> listarHorariosDisponiveis(Long idVeterinario, LocalDate data, int duracaoSlotsMinutos) {
+    public List<String> listarHorariosDisponiveis(Long idVeterinario, LocalDate data, int idTipoAgendamento) {
         logger.info("[listarHorariosDisponiveis] - Inicio - Buscando slots para Vet ID: {} na data: {}", idVeterinario, data);
+
+        AgendamentoTipo tipo = agendamentoTipoRepository.findById(idTipoAgendamento)
+                .orElseThrow(() -> new EntityNotFoundException("Tipo de agendamento com ID " + idTipoAgendamento + " não encontrado."));
+
+        int duracaoSlotsMinutos = tipo.getDuracaoMinutos();
 
         int idDiaSemana = DiaSemanaEnum.from(data.getDayOfWeek());
 
@@ -803,37 +811,52 @@ public class UsuarioService {
             return new ArrayList<>();
         }
 
-        List<LocalTime> slotsPossiveis = new ArrayList<>();
-        for (VeterinarioHorario bloco : blocosDeTrabalho) {
-            LocalTime slotAtual = bloco.getHoraInicio();
-            while (slotAtual.isBefore(bloco.getHoraFim())) {
-                slotsPossiveis.add(slotAtual);
-                slotAtual = slotAtual.plusMinutes(duracaoSlotsMinutos);
-            }
-        }
-
         LocalDateTime inicioDoDia = data.atStartOfDay();
         LocalDateTime fimDoDia = data.plusDays(1).atStartOfDay();
-
         List<Agendamento> agendamentosOcupados = agendamentoRepository.findAgendamentosByVeterinarioNaData(
-                idVeterinario,
-                inicioDoDia,
-                fimDoDia,
-                2
+                idVeterinario, inicioDoDia, fimDoDia, 2
         );
 
-        List<LocalTime> horariosOcupados = agendamentosOcupados.stream()
-                .map(ag -> ag.getDataAgendamentoInicio().toLocalTime())
-                .toList();
-
+        List<String> horariosDisponiveis = new ArrayList<>();
         LocalTime agora = LocalTime.now();
         boolean isHoje = data.isEqual(LocalDate.now());
 
-        List<String> horariosDisponiveis = slotsPossiveis.stream()
-                .filter(slot -> !horariosOcupados.contains(slot))
-                .filter(slot -> !isHoje || slot.isAfter(agora))
-                .map(LocalTime::toString)
-                .collect(Collectors.toList());
+        final int INCREMENTO_MINUTOS = 30;
+
+        for (VeterinarioHorario bloco : blocosDeTrabalho) {
+            LocalTime slotInicio = bloco.getHoraInicio();
+            LocalTime slotFim;
+
+            while (true) {
+                slotFim = slotInicio.plusMinutes(duracaoSlotsMinutos);
+
+
+                if (slotFim.isAfter(bloco.getHoraFim())) {
+                    break;
+                }
+
+                boolean isNoPassado = isHoje && slotInicio.isBefore(agora);
+                boolean isDisponivel = !isNoPassado;
+
+                if (isDisponivel) {
+                    for (Agendamento ocupado : agendamentosOcupados) {
+                        LocalTime ocupadoInicio = ocupado.getDataAgendamentoInicio().toLocalTime();
+                        LocalTime ocupadoFim = ocupado.getDataAgendamentoFinal().toLocalTime();
+
+                        if (slotInicio.isBefore(ocupadoFim) && slotFim.isAfter(ocupadoInicio)) {
+                            isDisponivel = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (isDisponivel) {
+                    horariosDisponiveis.add(slotInicio.toString());
+                }
+
+                slotInicio = slotInicio.plusMinutes(INCREMENTO_MINUTOS);
+            }
+        }
 
         logger.info("[listarHorariosDisponiveis] - Fim - Encontrados {} slots disponíveis.", horariosDisponiveis.size());
         return horariosDisponiveis;
