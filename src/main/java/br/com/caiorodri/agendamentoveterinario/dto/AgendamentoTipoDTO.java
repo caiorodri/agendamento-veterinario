@@ -12,6 +12,8 @@ public class AgendamentoTipoDTO {
 	private Integer id;
 	
 	private String nome;
+
+    private Integer duracaoMinutos;
 	
 	public AgendamentoTipoDTO(Integer id) {
 		

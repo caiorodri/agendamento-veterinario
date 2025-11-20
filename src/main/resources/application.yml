@@ -9,18 +9,18 @@ server:
 spring:
   application:
     name: agendamento-veterinario
-  
+
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  
+
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
-      
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -34,8 +34,8 @@ spring:
             enable: true
 
 springdoc:
-    security:
-      enabled: false
+  security:
+    enabled: false
 
 jwt:
   secret: ${JWT_SECRET}

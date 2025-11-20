@@ -1,14 +1,16 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
-import br.com.caiorodri.agendamentoveterinario.model.Estado;
-import br.com.caiorodri.agendamentoveterinario.model.Status;
-import br.com.caiorodri.agendamentoveterinario.model.UsuarioAlterarSenha;
-import br.com.caiorodri.agendamentoveterinario.repository.StatusRepository;
+import br.com.caiorodri.agendamentoveterinario.enums.DiaSemanaEnum;
+import br.com.caiorodri.agendamentoveterinario.model.*;
+import br.com.caiorodri.agendamentoveterinario.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import br.com.caiorodri.agendamentoveterinario.model.Usuario;
-import br.com.caiorodri.agendamentoveterinario.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +37,23 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private VeterinarioHorarioRepository veterinarioHorarioRepository;
+
+    @Autowired
+    private AgendamentoRepository agendamentoRepository;
+
+    @Autowired
+    private AgendamentoTipoRepository agendamentoTipoRepository;
+
+    @Autowired
+    private EstadoRepository estadoRepository;
+
     final static Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
     final String NOME_RECEPCIONISTA_AUTO_ATENDIMENTO = "AUTO ATENDIMENTO";
+
+    final Integer ID_VETERINARIO = 3;
 
     /**
      * Recupera um usuário pelo seu ID.
@@ -205,6 +219,12 @@ public class UsuarioService {
             usuarioExistente.setStatus(usuario.getStatus());
             usuarioExistente.setPerfil(usuario.getPerfil());
             usuarioExistente.setReceberEmail(usuario.isReceberEmail());
+
+            if(usuario.getUrlImagem() != null){
+
+                usuarioExistente.setUrlImagem(usuario.getUrlImagem());
+
+            }
 
             usuarioRepository.saveAndFlush(usuarioExistente);
 
@@ -597,7 +617,7 @@ public class UsuarioService {
 
         try {
 
-            List<Estado> listaEstados = usuarioRepository.findEstados();
+            List<Estado> listaEstados = estadoRepository.findEstados();
 
             logger.info("[listarEstados] - Fim - Busca concluída. Encontrados {} estados.", listaEstados.size());
 
@@ -751,4 +771,93 @@ public class UsuarioService {
 
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<VeterinarioHorario> listarHorariosVeterinario(Long idVeterinario) {
+        logger.info("[listarHorariosVeterinario] - Inicio - Buscando horários para o veterinário ID: {}", idVeterinario);
+
+        Usuario vet = usuarioRepository.findById(idVeterinario)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário com ID " + idVeterinario + " não encontrado."));
+
+        if (!Objects.equals(vet.getPerfil().getId(), ID_VETERINARIO)){
+            throw new IllegalArgumentException("Usuário com ID " + idVeterinario + " não é um veterinário.");
+        }
+
+        List<VeterinarioHorario> horarios = veterinarioHorarioRepository.findByVeterinarioId(idVeterinario);
+
+        logger.info("[listarHorariosVeterinario] - Fim - Encontrados {} blocos de horário.", horarios.size());
+
+        return horarios;
+
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> listarHorariosDisponiveis(Long idVeterinario, LocalDate data, int idTipoAgendamento) {
+        logger.info("[listarHorariosDisponiveis] - Inicio - Buscando slots para Vet ID: {} na data: {}", idVeterinario, data);
+
+        AgendamentoTipo tipo = agendamentoTipoRepository.findById(idTipoAgendamento)
+                .orElseThrow(() -> new EntityNotFoundException("Tipo de agendamento com ID " + idTipoAgendamento + " não encontrado."));
+
+        int duracaoSlotsMinutos = tipo.getDuracaoMinutos();
+
+        int idDiaSemana = DiaSemanaEnum.from(data.getDayOfWeek());
+
+        List<VeterinarioHorario> blocosDeTrabalho = veterinarioHorarioRepository.findByVeterinarioIdAndDiaDaSemanaId(idVeterinario, idDiaSemana);
+
+        if (blocosDeTrabalho.isEmpty()) {
+            logger.warn("[listarHorariosDisponiveis] - Fim - Veterinário ID: {} não trabalha neste dia da semana (ID {}).", idVeterinario, idDiaSemana);
+            return new ArrayList<>();
+        }
+
+        LocalDateTime inicioDoDia = data.atStartOfDay();
+        LocalDateTime fimDoDia = data.plusDays(1).atStartOfDay();
+        List<Agendamento> agendamentosOcupados = agendamentoRepository.findAgendamentosByVeterinarioNaData(
+                idVeterinario, inicioDoDia, fimDoDia, 2
+        );
+
+        List<String> horariosDisponiveis = new ArrayList<>();
+        LocalTime agora = LocalTime.now();
+        boolean isHoje = data.isEqual(LocalDate.now());
+
+        final int INCREMENTO_MINUTOS = 30;
+
+        for (VeterinarioHorario bloco : blocosDeTrabalho) {
+            LocalTime slotInicio = bloco.getHoraInicio();
+            LocalTime slotFim;
+
+            while (true) {
+                slotFim = slotInicio.plusMinutes(duracaoSlotsMinutos);
+
+
+                if (slotFim.isAfter(bloco.getHoraFim())) {
+                    break;
+                }
+
+                boolean isNoPassado = isHoje && slotInicio.isBefore(agora);
+                boolean isDisponivel = !isNoPassado;
+
+                if (isDisponivel) {
+                    for (Agendamento ocupado : agendamentosOcupados) {
+                        LocalTime ocupadoInicio = ocupado.getDataAgendamentoInicio().toLocalTime();
+                        LocalTime ocupadoFim = ocupado.getDataAgendamentoFinal().toLocalTime();
+
+                        if (slotInicio.isBefore(ocupadoFim) && slotFim.isAfter(ocupadoInicio)) {
+                            isDisponivel = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (isDisponivel) {
+                    horariosDisponiveis.add(slotInicio.toString());
+                }
+
+                slotInicio = slotInicio.plusMinutes(INCREMENTO_MINUTOS);
+            }
+        }
+
+        logger.info("[listarHorariosDisponiveis] - Fim - Encontrados {} slots disponíveis.", horariosDisponiveis.size());
+        return horariosDisponiveis;
+    }
+
 }

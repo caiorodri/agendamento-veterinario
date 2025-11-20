@@ -40,6 +40,8 @@ public class UsuarioDTO {
     private List<AgendamentoDTO> agendamentos;
 
     private List<AnimalDTO> animais;
+
+    private String urlImagem;
 	
 	public UsuarioDTO() {
 		

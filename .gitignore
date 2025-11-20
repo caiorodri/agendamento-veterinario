@@ -274,3 +274,5 @@ buildNumber.properties
 # Ignore all local history of files
 .history
 .ionide
+
+application-local.yml

@@ -37,8 +37,8 @@ public class AgendamentoService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private EmailSender emailSender;
+     @Autowired
+     private EmailSender emailSender;
 
     final static Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
 
@@ -215,7 +215,7 @@ public class AgendamentoService {
 
             Agendamento agendamentoAtualizado = agendamentoRepository.findById(agendamento.getId()).get();
 
-            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
+             emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
 
             logger.info("[atualizar] - Fim - Agendamento com id = {} atualizado com sucesso.", agendamentoAtualizado.getId());
 
@@ -314,7 +314,7 @@ public class AgendamentoService {
 
         if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal())) {
 
-            if(agendamento.getId() == null || agendamento.getId() <= 0) { // Novo agendamento com conflito
+            if(agendamento.getId() == null || agendamento.getId() <= 0) {
 
                 logger.error("[verificarConflitoHorario] - Fim - Erro: Conflito de horário detectado para um novo agendamento.");
                 throw new IllegalArgumentException("Já existe um agendamento para esse horário");

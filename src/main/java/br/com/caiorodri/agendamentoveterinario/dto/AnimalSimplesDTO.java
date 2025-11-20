@@ -18,4 +18,6 @@ public class AnimalSimplesDTO {
 
     private UsuarioSimplesDTO dono;
 
+    private String urlImagem;
+
 }
