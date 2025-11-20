@@ -1,5 +1,6 @@
 package br.com.caiorodri.agendamentoveterinario.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -370,5 +371,41 @@ public class AgendamentoService {
 
         return tipos;
 
+    }
+
+    /**
+     * Lista todos os agendamentos de uma data especifica
+     *
+     * @return List com os agendamentos.
+     */
+    public List<Agendamento> listarAgendamentosNaData(LocalDate data) {
+        logger.info("[listarAgendamentosNaData] - Inicio - Buscando agendamentos para a data {}", data);
+
+        LocalDateTime inicioDoDia = data.atStartOfDay();
+        LocalDateTime fimDoDia = data.plusDays(1).atStartOfDay();
+        Integer idStatusCancelado = 2;
+
+        List<Agendamento> agendamentos = agendamentoRepository.findAgendamentosNaData(inicioDoDia, fimDoDia, idStatusCancelado);
+
+        logger.info("[listarAgendamentosNaData] - Fim - Encontrados {} agendamentos.", agendamentos.size());
+        return agendamentos;
+    }
+
+    /**
+     * Lista todos os agendamentos de um veterinário em uma data especifica
+     *
+     * @return List com os agendamentos.
+     */
+    public List<Agendamento> listarAgendamentosVeterinarioNaData(Long idVeterinario, LocalDate data) {
+        logger.info("[listarAgendamentosVeterinarioNaData] - Inicio - Buscando agendamentos para o veterinário {} na data {}", idVeterinario, data);
+
+        LocalDateTime inicioDoDia = data.atStartOfDay();
+        LocalDateTime fimDoDia = data.plusDays(1).atStartOfDay();
+        Integer idStatusCancelado = 2;
+
+        List<Agendamento> agendamentos = agendamentoRepository.findAgendamentosByVeterinarioNaData(idVeterinario, inicioDoDia, fimDoDia, idStatusCancelado);
+
+        logger.info("[listarAgendamentosVeterinarioNaData] - Fim - Encontrados {} agendamentos.", agendamentos.size());
+        return agendamentos;
     }
 }

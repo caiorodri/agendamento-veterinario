@@ -105,4 +105,14 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
             Integer idStatusCancelado
     );
 
+    @Query("SELECT a FROM Agendamento a " +
+            "WHERE a.dataAgendamentoInicio >= ?1 " +
+            "AND a.dataAgendamentoInicio < ?2 " +
+            "AND a.status.id != ?3")
+    List<Agendamento> findAgendamentosNaData(
+            LocalDateTime inicioDoDia,
+            LocalDateTime fimDoDia,
+            Integer idStatusCancelado
+    );
+
 }
