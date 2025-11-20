@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,6 +37,7 @@ import br.com.caiorodri.agendamentoveterinario.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -166,6 +168,58 @@ public class AgendamentoController {
 
         return new ResponseEntity<>(agendamentosDto, HttpStatus.OK);
 
+    }
+
+    @Operation(
+            summary = "Listar agendamentos por data",
+            description = "Retorna uma lista de todos os agendamentos em uma data específica.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/data")
+    public ResponseEntity<List<AgendamentoDTO>> listarByData(
+            @Parameter(description = "Data para filtro (formato ISO: yyyy-MM-dd)", required = true, example = "2024-12-25")
+            @RequestParam("data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+
+        logger.info("[listarPorData] - Início");
+
+        List<Agendamento> agendamentos = agendamentoService.listarAgendamentosNaData(data);
+
+        List<AgendamentoDTO> agendamentosDto = mapper.agendamentoListToDtoList(agendamentos);
+
+        logger.info("[listarPorData] - Fim");
+
+        return new ResponseEntity<>(agendamentosDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar agendamentos por veterinário e data",
+            description = "Retorna uma lista de agendamentos de um veterinário específico em uma data.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "404", description = "Veterinário não encontrado (se validado no service)"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/veterinario/{idVeterinario}/data")
+    public ResponseEntity<List<AgendamentoDTO>> listarByVeterinarioAndData(
+            @Parameter(description = "ID do veterinário", required = true, example = "1") @PathVariable Long idVeterinario,
+            @Parameter(description = "Data para filtro (formato ISO: yyyy-MM-dd)", required = true, example = "2023-12-25")
+            @RequestParam("data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+
+        logger.info("[listarPorVeterinarioEData] - Início");
+
+        List<Agendamento> agendamentos = agendamentoService.listarAgendamentosVeterinarioNaData(idVeterinario, data);
+
+        List<AgendamentoDTO> agendamentosDto = mapper.agendamentoListToDtoList(agendamentos);
+
+        logger.info("[listarPorVeterinarioEData] - Fim");
+
+        return new ResponseEntity<>(agendamentosDto, HttpStatus.OK);
     }
 
     @Operation(
