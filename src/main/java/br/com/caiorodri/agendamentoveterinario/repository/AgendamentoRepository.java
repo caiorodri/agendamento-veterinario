@@ -106,6 +106,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
     );
 
     @Query("SELECT a FROM Agendamento a " +
+            "WHERE a.veterinario.id = ?1 ")
+    List<Agendamento> findAgendamentosByVeterinario(Long idVeterinario);
+
+    @Query("SELECT a FROM Agendamento a " +
             "WHERE a.dataAgendamentoInicio >= ?1 " +
             "AND a.dataAgendamentoInicio < ?2 " +
             "AND a.status.id != ?3")

@@ -213,11 +213,36 @@ public class AgendamentoController {
 
         logger.info("[listarPorVeterinarioEData] - Início");
 
-        List<Agendamento> agendamentos = agendamentoService.listarAgendamentosVeterinarioNaData(idVeterinario, data);
+        List<Agendamento> agendamentos = agendamentoService.listarAgendamentosByVeterinarioNaData(idVeterinario, data);
 
         List<AgendamentoDTO> agendamentosDto = mapper.agendamentoListToDtoList(agendamentos);
 
         logger.info("[listarPorVeterinarioEData] - Fim");
+
+        return new ResponseEntity<>(agendamentosDto, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Listar agendamentos por veterinário",
+            description = "Retorna uma lista de agendamentos de um veterinário específico.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Agendamentos listados com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "404", description = "Veterinário não encontrado (se validado no service)"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/veterinario/{idVeterinario}")
+    public ResponseEntity<List<AgendamentoDTO>> listarByVeterinario(
+            @Parameter(description = "ID do veterinário", required = true, example = "1") @PathVariable Long idVeterinario) {
+
+        logger.info("[listarByVeterinario] - Início");
+
+        List<Agendamento> agendamentos = agendamentoService.listarAgendamentosByVeterinario(idVeterinario);
+
+        List<AgendamentoDTO> agendamentosDto = mapper.agendamentoListToDtoList(agendamentos);
+
+        logger.info("[listarByVeterinario] - Fim");
 
         return new ResponseEntity<>(agendamentosDto, HttpStatus.OK);
     }

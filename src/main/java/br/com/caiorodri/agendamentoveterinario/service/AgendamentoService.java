@@ -391,13 +391,14 @@ public class AgendamentoService {
         return agendamentos;
     }
 
+
     /**
      * Lista todos os agendamentos de um veterinário em uma data especifica
      *
      * @return List com os agendamentos.
      */
-    public List<Agendamento> listarAgendamentosVeterinarioNaData(Long idVeterinario, LocalDate data) {
-        logger.info("[listarAgendamentosVeterinarioNaData] - Inicio - Buscando agendamentos para o veterinário {} na data {}", idVeterinario, data);
+    public List<Agendamento> listarAgendamentosByVeterinarioNaData(Long idVeterinario, LocalDate data) {
+        logger.info("[listarAgendamentosByVeterinarioNaData] - Inicio - Buscando agendamentos para o veterinário {} na data {}", idVeterinario, data);
 
         LocalDateTime inicioDoDia = data.atStartOfDay();
         LocalDateTime fimDoDia = data.plusDays(1).atStartOfDay();
@@ -405,7 +406,21 @@ public class AgendamentoService {
 
         List<Agendamento> agendamentos = agendamentoRepository.findAgendamentosByVeterinarioNaData(idVeterinario, inicioDoDia, fimDoDia, idStatusCancelado);
 
-        logger.info("[listarAgendamentosVeterinarioNaData] - Fim - Encontrados {} agendamentos.", agendamentos.size());
+        logger.info("[listarAgendamentosByVeterinarioNaData] - Fim - Encontrados {} agendamentos.", agendamentos.size());
+        return agendamentos;
+    }
+
+    /**
+     * Lista todos os agendamentos de um veterinário
+     *
+     * @return List com os agendamentos.
+     */
+    public List<Agendamento> listarAgendamentosByVeterinario(Long idVeterinario) {
+        logger.info("[listarAgendamentosByVeterinario] - Inicio - Buscando agendamentos para o veterinário {}", idVeterinario);
+
+        List<Agendamento> agendamentos = agendamentoRepository.findAgendamentosByVeterinario(idVeterinario);
+
+        logger.info("[listarAgendamentosByVeterinario] - Fim - Encontrados {} agendamentos.", agendamentos.size());
         return agendamentos;
     }
 
