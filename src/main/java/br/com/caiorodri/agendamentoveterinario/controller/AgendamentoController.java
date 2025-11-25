@@ -12,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -158,7 +155,7 @@ public class AgendamentoController {
 
         logger.info("[listarByUsuario] - Início");
 
-        Pageable pageable = PageRequest.of(pagina, quantidadeItens);
+        Pageable pageable = PageRequest.of(pagina, quantidadeItens, Sort.by("dataAgendamentoInicio").descending());
 
         Page<Agendamento> agendamentos = agendamentoService.listarByUsuarioId(idUsuario, pageable);
 
