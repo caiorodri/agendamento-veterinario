@@ -17,6 +17,10 @@ public interface AnimalRepository extends JpaRepository<Animal, Long>{
 	@Query("SELECT DISTINCT a FROM Animal a " +
 		   "LEFT JOIN FETCH a.dono d ")
 	public Page<Animal> findAll(Pageable pageable);
+
+    @Query("SELECT DISTINCT a FROM Animal a " +
+            "LEFT JOIN FETCH a.dono d ")
+    public List<Animal> findAll();
 	
 	@Query("SELECT a FROM Animal a " +
 			"LEFT JOIN FETCH a.dono " +

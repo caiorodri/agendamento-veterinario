@@ -100,6 +100,33 @@ public class AnimalService {
     }
 
     /**
+     * Lista todos os animais sem paginação.
+     *
+     * @return List com animais.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os animais.
+     */
+    @Transactional(readOnly = true)
+    public List<Animal> listar() {
+
+        logger.info("[listar] - Inicio - Listando animais");
+
+        try {
+
+            List<Animal> animais = animalRepository.findAll();
+
+            logger.info("[listar] - Fim - Encontrados {} animais no total.", animais.size());
+
+            return animais;
+
+        } catch (Exception e) {
+
+            logger.error("[listar] - Fim - Erro inesperado ao listar animais: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar animais", e);
+
+        }
+    }
+
+    /**
      * Lista animais filtrando pelo ID do dono com paginação.
      *
      * @param idDono ID do dono do animal.
