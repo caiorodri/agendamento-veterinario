@@ -16,7 +16,7 @@ import br.com.caiorodri.agendamentoveterinario.model.Usuario;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
 
 	public Page<Usuario> findAll(Pageable pageable);
-	
+
 	public boolean existsByCpf(String cpf);
 
 	public boolean existsByEmail(String email);

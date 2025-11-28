@@ -459,6 +459,33 @@ public class UsuarioService {
     }
 
     /**
+     * Lista todos os clientes sem paginação.
+     *
+     * @return List com clientes.
+     * @throws RuntimeException se ocorrer um erro inesperado ao consultar os clientes.
+     */
+    @Transactional(readOnly = true)
+    public List<Usuario> listarClientes() {
+
+        logger.info("[listarClientes] - Inicio - Listando clientes");
+
+        try {
+
+            List<Usuario> clientes = usuarioRepository.findClientesAtivos();
+
+            logger.info("[listarClientes] - Fim - Encontrados {} clientes no total.", clientes.size());
+
+            return clientes;
+
+        } catch (Exception e) {
+
+            logger.error("[listarClientes] - Fim - Erro inesperado ao listar clientes: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao listar clientes", e);
+
+        }
+    }
+
+    /**
      * Lista todos os usuários com perfil de recepcionista.
      *
      * @return List com recepcionistas.

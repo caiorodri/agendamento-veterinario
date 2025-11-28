@@ -441,6 +441,31 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Listar clientes",
+            description = "Retorna uma lista de usuários com perfil de CLIENTE. (Requer perfil: ADMINISTRADOR, RECEPCIONISTA ou VETERINARIO)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "403", description = "Usuário não tem permissão para esta ação"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/clientes/ativo")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
+    public ResponseEntity<List<UsuarioDTO>> listarClientesAtivos(){
+
+        logger.info("[listarClientesAtivos] - Início");
+
+        List<Usuario> clientes = usuarioService.listarClientes();
+
+        List<UsuarioDTO> clientesDto = mapper.usuarioListToDtoList(clientes);
+
+        logger.info("[listarClientesAtivos] - Fim");
+
+        return new ResponseEntity<>(clientesDto, HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Listar recepcionistas",
             description = "Retorna uma lista de todos os usuários com perfil de RECEPCIONISTA. (Requer perfil: ADMINISTRADOR ou RECEPCIONISTA)",
             responses = {
