@@ -313,7 +313,7 @@ public class AgendamentoService {
 
         logger.info("[verificarConflitoHorario] - Inicio - Verificando conflitos de horário.");
 
-        if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal())) {
+        if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId())) {
 
             if(agendamento.getId() == null || agendamento.getId() <= 0) {
 

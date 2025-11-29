@@ -18,13 +18,15 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 	
 	@Query("SELECT COUNT(a) > 0 " +
 		    "FROM Agendamento a " +
-		    "WHERE (a.dataAgendamentoInicio <= ?1 " +
+		    "WHERE ((a.dataAgendamentoInicio <= ?1 " +
 		    "AND a.dataAgendamentoFinal >= ?2) " +
 		    "OR (a.dataAgendamentoInicio <= ?1 " +
 		    "AND a.dataAgendamentoFinal > ?1) " +
 		    "OR (a.dataAgendamentoInicio < ?2 " +
-		    "AND a.dataAgendamentoFinal >= ?2)")
-	boolean existeConflitoDeHorario(LocalDateTime inicio, LocalDateTime fim);
+		    "AND a.dataAgendamentoFinal >= ?2)) " +
+            "AND a.veterinario.id = ?3"
+    )
+	boolean existeConflitoDeHorario(LocalDateTime inicio, LocalDateTime fim, Long idVeterinario);
 
 	@Query("SELECT a FROM Agendamento a " +
 		    "WHERE (a.dataAgendamentoInicio < ?1 " +
