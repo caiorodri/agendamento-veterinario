@@ -322,7 +322,7 @@ public class AgendamentoService {
 
             }
 
-            List<Agendamento> agendamentosConflitantes = agendamentoRepository.findByHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal());
+            List<Agendamento> agendamentosConflitantes = agendamentoRepository.findByHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId());
 
             for(Agendamento agendamentoConflitante : agendamentosConflitantes) {
 
