@@ -24,9 +24,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 		    "AND a.dataAgendamentoFinal > ?1) " +
 		    "OR (a.dataAgendamentoInicio < ?2 " +
 		    "AND a.dataAgendamentoFinal >= ?2)) " +
-            "AND a.veterinario.id = ?3"
+            "AND a.veterinario.id = ?3 " +
+            "AND a.status.id != ?4"
     )
-	boolean existeConflitoDeHorario(LocalDateTime inicio, LocalDateTime fim, Long idVeterinario);
+	boolean existeConflitoDeHorario(LocalDateTime inicio, LocalDateTime fim, Long idVeterinario, Integer idStatusCancelado);
 
 	@Query("SELECT a FROM Agendamento a " +
 		    "WHERE ((a.dataAgendamentoInicio < ?1 " +
@@ -35,9 +36,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long>{
 		    "AND a.dataAgendamentoFinal > ?1) " +
 		    "OR (a.dataAgendamentoInicio < ?2 " +
 		    "AND a.dataAgendamentoFinal > ?1)) " +
-            "AND a.veterinario.id = ?3"
+            "AND a.veterinario.id = ?3 " +
+            "AND a.status.id != ?4"
     )
-	List<Agendamento> findByHorario(LocalDateTime inicio, LocalDateTime fim, Long idVeterinario);
+	List<Agendamento> findByHorario(LocalDateTime inicio, LocalDateTime fim, Long idVeterinario, Integer idStatusCancelado);
 	
 	@Query("SELECT DISTINCT a FROM Agendamento a " +
             "INNER JOIN FETCH a.animal animal " +

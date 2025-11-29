@@ -313,7 +313,9 @@ public class AgendamentoService {
 
         logger.info("[verificarConflitoHorario] - Inicio - Verificando conflitos de horário.");
 
-        if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId())) {
+        Integer idStatusCancelado = 2;
+
+        if(agendamentoRepository.existeConflitoDeHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId(), idStatusCancelado)) {
 
             if(agendamento.getId() == null || agendamento.getId() <= 0) {
 
@@ -322,7 +324,7 @@ public class AgendamentoService {
 
             }
 
-            List<Agendamento> agendamentosConflitantes = agendamentoRepository.findByHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId());
+            List<Agendamento> agendamentosConflitantes = agendamentoRepository.findByHorario(agendamento.getDataAgendamentoInicio(), agendamento.getDataAgendamentoFinal(), agendamento.getVeterinario().getId(), idStatusCancelado);
 
             for(Agendamento agendamentoConflitante : agendamentosConflitantes) {
 
