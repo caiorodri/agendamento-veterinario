@@ -3,6 +3,7 @@ package br.com.caiorodri.agendamentoveterinario.controller;
 import br.com.caiorodri.agendamentoveterinario.dto.*;
 import br.com.caiorodri.agendamentoveterinario.model.*;
 import br.com.caiorodri.agendamentoveterinario.security.TokenService;
+import br.com.caiorodri.agendamentoveterinario.service.VeterinarioHorarioService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,6 +50,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private VeterinarioHorarioService veterinarioHorarioService;
 
     @Autowired
     private Mapper mapper;
@@ -628,7 +632,7 @@ public class UsuarioController {
             }
     )
     @GetMapping("/veterinarios/{id}/horarios")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
     public ResponseEntity<List<VeterinarioHorarioDTO>> listarHorariosVeterinario(
             @Parameter(description = "ID do usuário (veterinário)", required = true) @PathVariable Long id) {
 
@@ -668,4 +672,68 @@ public class UsuarioController {
 
         return new ResponseEntity<>(horarios, HttpStatus.OK);
     }
+
+    @Operation(
+            summary = "Cadastrar horário de veterinário",
+            description = "Cria um novo bloco de horário de trabalho para um veterinário.",
+            responses = {
+        @ApiResponse(responseCode = "201", description = "Horário criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos (ex: hora fim menor que início)"),
+        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    }
+    )
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VETERINARIO')")
+    @PostMapping("/veterinarios/horarios")
+    public ResponseEntity<VeterinarioHorarioDTO> criarHorario(@RequestBody VeterinarioHorarioDTO dto) {
+
+        logger.info("[criarHorario] - Início");
+
+        VeterinarioHorario entity = mapper.dtoToVeterinarioHorario(dto);
+
+        VeterinarioHorario salvo = veterinarioHorarioService.salvar(entity);
+
+        VeterinarioHorarioDTO dtoSalvo = mapper.veterinarioHorarioToDto(salvo);
+
+        logger.info("[criarHorario] - Fim");
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtoSalvo);
+    }
+
+    @Operation(
+            summary = "Listar horários por veterinário",
+            description = "Retorna todos os horários cadastrados para um veterinário específico."
+    )
+    @GetMapping("/veterinarios/horarios/{idVeterinario}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VETERINARIO')")
+    public ResponseEntity<List<VeterinarioHorarioDTO>> listarHorarios(@PathVariable Long idVeterinario) {
+
+        logger.info("[listarHorarios] - Início");
+
+        List<VeterinarioHorario> lista = veterinarioHorarioService.listarPorVeterinario(idVeterinario);
+
+        List<VeterinarioHorarioDTO> dtos = mapper.veterinarioHorarioListToDtoList(lista);
+
+        logger.info("[listarHorarios] - Fim");
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @Operation(
+            summary = "Excluir horário",
+            description = "Remove um bloco de horário de trabalho."
+    )
+    @DeleteMapping("/veterinarios/horarios/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VETERINARIO')")
+    public ResponseEntity<Void> deletarHorario(@PathVariable Long id) {
+
+        logger.info("[deletarHorario] - Início");
+
+        veterinarioHorarioService.deletar(id);
+
+        logger.info("[deletarHorario] - Fim");
+
+        return ResponseEntity.noContent().build();
+
+    }
+
 }

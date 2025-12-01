@@ -1,5 +1,6 @@
 package br.com.caiorodri.agendamentoveterinario.model;
 
+import br.com.caiorodri.agendamentoveterinario.enums.DiaSemanaEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

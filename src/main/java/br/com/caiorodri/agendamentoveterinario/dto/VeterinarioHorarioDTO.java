@@ -6,6 +6,7 @@ import java.time.LocalTime;
 @Data
 public class VeterinarioHorarioDTO {
     private Long id;
+    private Long idVeterinario;
     private Integer idDiaSemana;
     private LocalTime horaInicio;
     private LocalTime horaFim;

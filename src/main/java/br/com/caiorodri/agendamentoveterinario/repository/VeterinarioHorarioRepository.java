@@ -10,6 +10,8 @@ import java.util.List;
 @Repository
 public interface VeterinarioHorarioRepository extends JpaRepository<VeterinarioHorario, Long> {
 
+    List<VeterinarioHorario> findByVeterinarioIdOrderByDiaSemanaIdAscHoraInicioAsc(Long idVeterinario);
+
     List<VeterinarioHorario> findByVeterinarioId(Long idVeterinario);
 
     @Query("SELECT vh FROM VeterinarioHorario vh " +

@@ -79,9 +79,11 @@ public interface Mapper {
     List<Status> dtoListToStatusList(List<StatusDTO> dtos);
 
     @Mapping(source = "diaSemana.id", target = "idDiaSemana")
+    @Mapping(source = "veterinario.id", target = "idVeterinario")
     VeterinarioHorarioDTO veterinarioHorarioToDto(VeterinarioHorario model);
 
     @Mapping(source = "idDiaSemana", target = "diaSemana.id")
+    @Mapping(source = "idVeterinario", target = "veterinario.id")
     VeterinarioHorario dtoToVeterinarioHorario(VeterinarioHorarioDTO dto);
 
     List<VeterinarioHorarioDTO> veterinarioHorarioListToDtoList(List<VeterinarioHorario> models);
