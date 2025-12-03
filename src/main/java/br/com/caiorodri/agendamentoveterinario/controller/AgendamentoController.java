@@ -2,8 +2,10 @@ package br.com.caiorodri.agendamentoveterinario.controller;
 
 import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoStatusDTO;
 import br.com.caiorodri.agendamentoveterinario.dto.AgendamentoTipoDTO;
+import br.com.caiorodri.agendamentoveterinario.dto.ResultadoConsultaDTO;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
 import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
+import br.com.caiorodri.agendamentoveterinario.model.ResultadoConsulta;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -377,6 +379,60 @@ public class AgendamentoController {
         logger.info("[listarAgendamentoTipo] - Fim");
 
         return new ResponseEntity<>(tiposDTO, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Salvar resultado da consulta (Pós-Consulta)",
+            description = "Salva o diagnóstico e as prescrições de um agendamento. Atualiza o status do agendamento para 'Concluído'.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Objeto JSON contendo os dados do resultado da consulta.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = ResultadoConsulta.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Resultado salvo com sucesso"),
+                    @ApiResponse(responseCode = "400", description = "Erro na requisição (ex: agendamento inexistente ou duplicado)"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @PostMapping("/resultado")
+    public ResponseEntity<ResultadoConsultaDTO> salvarResultado(@RequestBody ResultadoConsulta resultadoConsulta) {
+
+        logger.info("[salvarResultado] - Início");
+
+        ResultadoConsulta resultadoSalvo = agendamentoService.salvarResultadoConsulta(resultadoConsulta);
+
+        ResultadoConsultaDTO resultadoConsultaDTO = mapper.resultadoConsultaToDto(resultadoSalvo);
+
+        logger.info("[salvarResultado] - Fim");
+
+        return new ResponseEntity<>(resultadoConsultaDTO, HttpStatus.CREATED);
+    }
+
+    @Operation(
+            summary = "Recuperar resultado por agendamento",
+            description = "Recupera o resultado da consulta (diagnóstico e prescrições) através do ID do agendamento.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Resultado encontrado com sucesso"),
+                    @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+                    @ApiResponse(responseCode = "404", description = "Resultado não encontrado para este agendamento"),
+                    @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            }
+    )
+    @GetMapping("/{idAgendamento}/resultado")
+    public ResponseEntity<ResultadoConsultaDTO> recuperarResultado(
+            @Parameter(description = "ID do agendamento", required = true, example = "1") @PathVariable Long idAgendamento) {
+
+        logger.info("[recuperarResultado] - Início");
+
+        ResultadoConsulta resultado = agendamentoService.recuperarResultadoPorAgendamento(idAgendamento);
+
+        ResultadoConsultaDTO resultadoConsultaDTO = mapper.resultadoConsultaToDto(resultado);
+
+        logger.info("[recuperarResultado] - Fim");
+
+        return new ResponseEntity<>(resultadoConsultaDTO, HttpStatus.OK);
     }
 
 }

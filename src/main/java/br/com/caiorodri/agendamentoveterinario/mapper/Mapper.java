@@ -89,4 +89,16 @@ public interface Mapper {
     List<VeterinarioHorarioDTO> veterinarioHorarioListToDtoList(List<VeterinarioHorario> models);
     List<VeterinarioHorario> dtoListToVeterinarioHorarioList(List<VeterinarioHorarioDTO> dtos);
 
+    ItemPrescricaoDTO itemPrescricaoToDto(ItemPrescricao model);
+    ItemPrescricao dtoToItemPrescricao(ItemPrescricaoDTO dto);
+
+    List<ItemPrescricaoDTO> itemPrescricaoListToDtoList(List<ItemPrescricao> models);
+    List<ItemPrescricao> dtoListToItemPrescricaoList(List<ItemPrescricaoDTO> dtos);
+
+    ResultadoConsultaDTO resultadoConsultaToDto(ResultadoConsulta model);
+    ResultadoConsulta dtoToResultadoConsulta(ResultadoConsultaDTO dto);
+
+    List<ResultadoConsultaDTO> resultadoConsultaListToDtoList(List<ResultadoConsulta> models);
+    List<ResultadoConsulta> dtoListToResultadoConsultaList(List<ResultadoConsultaDTO> dtos);
+
 }

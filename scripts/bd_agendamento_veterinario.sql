@@ -257,3 +257,21 @@ CREATE TABLE veterinario_horario (
     FOREIGN KEY (id_veterinario) REFERENCES usuario(id),
     FOREIGN KEY (dia_semana) REFERENCES dia_semana(id)
 );
+
+CREATE TABLE resultado_consulta (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_agendamento BIGINT NOT NULL UNIQUE,
+    diagnostico_principal VARCHAR(255) NOT NULL,
+    observacoes_veterinario TEXT,
+    data_realizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+    CONSTRAINT resultado_agendamento_fk FOREIGN KEY (id_agendamento) REFERENCES agendamento(id)
+);
+
+CREATE TABLE item_prescricao (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_resultado_consulta BIGINT NOT NULL,
+    nome_medicamento VARCHAR(100) NOT NULL,
+    dosagem VARCHAR(100) NOT NULL,
+    instrucoes_uso VARCHAR(255) NOT NULL,
+    CONSTRAINT item_resultado_fk FOREIGN KEY (id_resultado_consulta) REFERENCES resultado_consulta(id) ON DELETE CASCADE
+);

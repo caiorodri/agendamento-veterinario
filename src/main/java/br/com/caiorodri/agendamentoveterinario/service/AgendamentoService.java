@@ -3,11 +3,10 @@ package br.com.caiorodri.agendamentoveterinario.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
-import br.com.caiorodri.agendamentoveterinario.model.AgendamentoStatus;
-import br.com.caiorodri.agendamentoveterinario.model.AgendamentoTipo;
-import br.com.caiorodri.agendamentoveterinario.model.Status;
+import br.com.caiorodri.agendamentoveterinario.model.*;
 import br.com.caiorodri.agendamentoveterinario.repository.*;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import br.com.caiorodri.agendamentoveterinario.model.Agendamento;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -37,6 +35,12 @@ public class AgendamentoService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ResultadoConsultaRepository resultadoConsultaRepository;
+
+    @Autowired
+    private ItemPrescricaoRepository itemPrescricaoRepository;
 
     // @Autowired
     // private EmailSender emailSender;
@@ -424,6 +428,82 @@ public class AgendamentoService {
 
         logger.info("[listarAgendamentosByVeterinario] - Fim - Encontrados {} agendamentos.", agendamentos.size());
         return agendamentos;
+    }
+
+    /**
+     * Salva o resultado da consulta e atualiza o status do agendamento para concluído.
+     *
+     * @param resultadoConsulta Objeto com os dados do resultado da consulta e prescrições.
+     * @return ResultadoConsulta salvo.
+     * @throws EntityNotFoundException se o agendamento associado não for encontrado.
+     * @throws IllegalArgumentException se o agendamento já tiver um resultado.
+     * @throws RuntimeException se ocorrer algum erro interno.
+     */
+    @Transactional
+    public ResultadoConsulta salvarResultadoConsulta(ResultadoConsulta resultadoConsulta) {
+
+        logger.info("[salvarResultadoConsulta] - Inicio - Tentativa de salvar resultado para o agendamento id = {}", resultadoConsulta.getAgendamento().getId());
+
+        try {
+
+            Long agendamentoId = resultadoConsulta.getAgendamento().getId();
+
+            Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+                    .orElseThrow(() -> new EntityNotFoundException("Agendamento não encontrado com id: " + agendamentoId));
+
+            if (resultadoConsultaRepository.existsByAgendamentoId(agendamentoId)) {
+                logger.error("[salvarResultadoConsulta] - Fim - Erro: Já existe um resultado cadastrado para este agendamento.");
+                throw new IllegalArgumentException("Este agendamento já possui um resultado cadastrado.");
+            }
+
+            resultadoConsulta.setAgendamento(agendamento);
+
+            if (resultadoConsulta.getPrescricoes() != null) {
+                for (ItemPrescricao item : resultadoConsulta.getPrescricoes()) {
+                    item.setResultadoConsulta(resultadoConsulta);
+                }
+            }
+
+            ResultadoConsulta resultadoSalvo = resultadoConsultaRepository.save(resultadoConsulta);
+
+            AgendamentoStatus statusConcluido = agendamentoStatusRepository.findById(3)
+                    .orElseThrow(() -> new EntityNotFoundException("Status 'Concluído' (id 3) não encontrado."));
+
+            agendamento.setStatus(statusConcluido);
+            agendamentoRepository.save(agendamento);
+
+            logger.info("[salvarResultadoConsulta] - Fim - Resultado salvo e agendamento atualizado para CONCLUÍDO. ID Resultado = {}", resultadoSalvo.getId());
+
+            return resultadoSalvo;
+
+        } catch (EntityNotFoundException | IllegalArgumentException e) {
+            logger.error("[salvarResultadoConsulta] - Fim - Erro de validação: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("[salvarResultadoConsulta] - Fim - Erro inesperado: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar resultado da consulta: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Recupera o resultado da consulta pelo ID do agendamento.
+     *
+     * @param agendamentoId ID do agendamento.
+     * @return ResultadoConsulta encontrado ou null.
+     */
+    public ResultadoConsulta recuperarResultadoPorAgendamento(Long agendamentoId) {
+
+        logger.info("[recuperarResultadoPorAgendamento] - Inicio - Buscando resultado para o agendamento id = {}", agendamentoId);
+
+        Optional<ResultadoConsulta> resultado = resultadoConsultaRepository.findByAgendamentoId(agendamentoId);
+
+        if (resultado.isPresent()) {
+            logger.info("[recuperarResultadoPorAgendamento] - Fim - Resultado encontrado com id = {}", resultado.get().getId());
+            return resultado.get();
+        } else {
+            logger.warn("[recuperarResultadoPorAgendamento] - Fim - Nenhum resultado encontrado para o agendamento id = {}", agendamentoId);
+            return null;
+        }
     }
 
 }
