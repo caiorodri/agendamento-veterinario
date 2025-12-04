@@ -416,6 +416,31 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Recuperar usuário logado e renovar token",
+            description = "Retorna os dados completos do usuário autenticado junto com um novo token JWT (Refresh Token lógico)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token renovado e usuário retornado com sucesso."),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+    })
+    @GetMapping("/me/token")
+    public ResponseEntity<LoginResponseDTO> getUsuarioLogadoWithToken(@AuthenticationPrincipal Usuario usuario) {
+
+        logger.info("[getUsuarioLogadoWithToken] - Início");
+
+        Usuario usuarioCompleto = usuarioService.recuperar(usuario.getId());
+
+        var novoToken = tokenService.generateToken(usuarioCompleto);
+
+        var usuarioDto = mapper.usuarioToDto(usuarioCompleto);
+
+        logger.info("[getUsuarioLogadoWithToken] - Fim");
+
+        return new ResponseEntity<>(new LoginResponseDTO(novoToken, usuarioDto), HttpStatus.OK);
+    }
+
+    @Operation(
             summary = "Listar clientes (paginado)",
             description = "Retorna uma lista paginada de usuários com perfil de CLIENTE. (Requer perfil: ADMINISTRADOR, RECEPCIONISTA ou VETERINARIO)",
             responses = {
