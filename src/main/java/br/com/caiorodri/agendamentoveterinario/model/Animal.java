@@ -24,11 +24,11 @@ public class Animal {
 	
 	private String nome;
 
-	@OneToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_raca")
 	private Raca raca;
 	
-	@OneToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_sexo")
 	private Sexo sexo;
 	

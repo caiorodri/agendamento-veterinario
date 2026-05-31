@@ -42,8 +42,8 @@ public class AgendamentoService {
     @Autowired
     private ItemPrescricaoRepository itemPrescricaoRepository;
 
-    // @Autowired
-    // private EmailSender emailSender;
+     @Autowired
+     private EmailSender emailSender;
 
     final static Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
 
@@ -163,7 +163,7 @@ public class AgendamentoService {
 
             Agendamento agendamentoSalvo = agendamentoRepository.save(agendamento);
 
-            //emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
+            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, false);
 
             logger.info("[salvar] - Fim - Agendamento salvo com sucesso com o id = {}", agendamentoSalvo.getId());
 
@@ -218,13 +218,11 @@ public class AgendamentoService {
 
             agendamentoRepository.saveAndFlush(agendamentoSalvo);
 
-            Agendamento agendamentoAtualizado = agendamentoRepository.findById(agendamento.getId()).get();
+            emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamentoSalvo, true);
 
-            // emailSender.enviarInformacaoCadastroAgendamentoEmail(agendamento, true);
+            logger.info("[atualizar] - Fim - Agendamento com id = {} atualizado com sucesso.", agendamentoSalvo.getId());
 
-            logger.info("[atualizar] - Fim - Agendamento com id = {} atualizado com sucesso.", agendamentoAtualizado.getId());
-
-            return agendamentoAtualizado;
+            return agendamentoSalvo;
 
         } catch (IllegalArgumentException e) {
 

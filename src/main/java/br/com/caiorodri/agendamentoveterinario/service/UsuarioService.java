@@ -3,16 +3,14 @@ package br.com.caiorodri.agendamentoveterinario.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import br.com.caiorodri.agendamentoveterinario.email.EmailSender;
 import br.com.caiorodri.agendamentoveterinario.enums.DiaSemanaEnum;
 import br.com.caiorodri.agendamentoveterinario.model.*;
 import br.com.caiorodri.agendamentoveterinario.repository.*;
+import br.com.caiorodri.agendamentoveterinario.util.ValidadorCPF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +31,8 @@ public class UsuarioService {
     @Autowired
     private StatusRepository statusRepository;
 
-//    @Autowired
-//    private EmailSender emailSender;
+    @Autowired
+    private EmailSender emailSender;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -168,7 +166,7 @@ public class UsuarioService {
 
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
-//            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
+            emailSender.enviarInformacaoCadastroUsuarioEmail(usuarioSalvo);
 
             logger.info("[salvar] - Fim - Usuário salvo com sucesso com o id = {}", usuarioSalvo.getId());
 
@@ -348,13 +346,13 @@ public class UsuarioService {
      */
     private void validarUsuario(Usuario usuario, boolean isNovoUsuario) {
 
-        logger.info("[validarUsuario] - Inicio - Validando dados do usuário com email: {}", usuario.getEmail());
-
         if (usuario == null) {
 
             throw new IllegalArgumentException("Usuário não pode ser nulo.");
 
         }
+
+        logger.info("[validarUsuario] - Inicio - Validando dados do usuário com email: {}", usuario.getEmail());
 
         if (usuario.getNome() == null || usuario.getNome().isBlank()) {
 
@@ -365,6 +363,12 @@ public class UsuarioService {
         if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
 
             throw new IllegalArgumentException("Email do usuário é obrigatório.");
+
+        }
+
+        if(!ValidadorCPF.isValido(usuario.getCpf())){
+
+            throw new IllegalArgumentException("CPF inválido.");
 
         }
 
@@ -682,7 +686,14 @@ public class UsuarioService {
 
             }
 
-//            emailSender.enviarCodigoEmail(email);
+            Usuario usuario = usuarioOptional.get();
+
+            String codigo = gerarCodigo();
+            usuario.setCodigoRecuperacao(codigo);
+            usuario.setExpiracaoCodigo(LocalDateTime.now().plusMinutes(15));
+            usuarioRepository.save(usuario);
+
+            emailSender.enviarCodigoEmail(usuario.getNome(), email, codigo);
 
             logger.info("[enviarCodigoEmail] - Fim - Processo de envio de código iniciado para o email: {}", email);
             return true;
@@ -779,7 +790,7 @@ public class UsuarioService {
                     if(usuario.isReceberEmail()) {
 
                         logger.info("[enviarEmailClientesCampanhaVacinacao] - Enviando email para o usuário id {}", usuario.getId());
-//                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
+                        emailSender.enviarInformacaoCampanhaVacinaEmail(usuario);
 
                     } else {
 
@@ -887,6 +898,13 @@ public class UsuarioService {
 
         logger.info("[listarHorariosDisponiveis] - Fim - Encontrados {} slots disponíveis.", horariosDisponiveis.size());
         return horariosDisponiveis;
+    }
+
+    private String gerarCodigo() {
+
+        Random random = new Random();
+
+        return "" + random.nextInt(10000, 100000);
     }
 
 }

@@ -29,39 +29,39 @@ public class NotificacaoScheduler {
     @Autowired
     private EmailSender emailService;
 
-//    @Scheduled(cron = "0 0 10 * * MON")
-//    private void verificarAnimaisSemConsultaRecente() {
-//
-//        List<Animal> animais = animalRepository.findAll();
-//
-//        for(Animal animal : animais) {
-//
-//            Agendamento ultimaConsulta = agendamentoRepository.findUltimaConsultaByAnimal(animal.getId());
-//
-//            if(ultimaConsulta != null) {
-//
-//                if(!animal.getDono().isEmailRealizarConsultaRecebido() && animal.getDono().isReceberEmail()) {
-//
-//                    LocalDate dataUltimaConsulta = ultimaConsulta.getDataAgendamentoInicio().toLocalDate();
-//                    LocalDate hoje = LocalDate.now();
-//
-//                    if (dataUltimaConsulta.isBefore(hoje.minusMonths(6))) {
-//
-//                        emailService.enviarInformacaoRealizarConsultaEmail(animal, ultimaConsulta);
-//
-//                        animal.getDono().setEmailRealizarConsultaRecebido(true);
-//
-//                        usuarioRepository.save(animal.getDono());
-//
-//                    }
-//
-//
-//                }
-//
-//            }
-//
-//        }
-//
-//    }
+    @Scheduled(cron = "0 0 10 * * MON")
+    public void verificarAnimaisSemConsultaRecente() {
+
+        List<Animal> animais = animalRepository.findAll();
+
+        for(Animal animal : animais) {
+
+            Agendamento ultimaConsulta = agendamentoRepository.findUltimaConsultaByAnimal(animal.getId());
+
+            if(ultimaConsulta != null) {
+
+                if(!animal.getDono().isEmailRealizarConsultaRecebido() && animal.getDono().isReceberEmail()) {
+
+                    LocalDate dataUltimaConsulta = ultimaConsulta.getDataAgendamentoInicio().toLocalDate();
+                    LocalDate hoje = LocalDate.now();
+
+                    if (dataUltimaConsulta.isBefore(hoje.minusMonths(6))) {
+
+                        emailService.enviarInformacaoRealizarConsultaEmail(animal, ultimaConsulta);
+
+                        animal.getDono().setEmailRealizarConsultaRecebido(true);
+
+                        usuarioRepository.save(animal.getDono());
+
+                    }
+
+
+                }
+
+            }
+
+        }
+
+    }
 
 }

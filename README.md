@@ -13,6 +13,7 @@ API REST para gerenciamento de agendamentos em clínicas veterinárias, desenvol
   * **Lombok**
   * **MapStruct**
   * **Swagger** (via springdoc-openapi)
+  * **Junit 5, Mockito e RestAssured**
 
 -----
 
@@ -86,6 +87,17 @@ spring:
           auth: true
           starttls:
             enable: true
+
+springdoc:
+  security:
+    enabled: false
+
+jwt:
+  secret: sua_secret
+  expiration: sua_expiration
+
+endereco: endereco_clinica
+contato: seu_contato
 ```
 
 **Observação sobre `sua_senha_app`:** Para o `spring.mail.password` ao usar o Gmail, é altamente recomendável gerar uma **senha de aplicativo** em suas configurações de segurança do Google, em vez de usar a senha da sua conta principal, para maior segurança.
@@ -101,7 +113,12 @@ Siga estes passos para clonar o repositório e executar a aplicação:
     cd agendamento-veterinario
     ```
 
-2.  Rode a aplicação usando Maven:
+2.  Limpe e compile o projeto executando o comando:
+
+    ```bash
+    mvn clean install
+    ```
+3.  Rode a aplicação usando Maven:
 
     ```bash
     mvn spring-boot:run

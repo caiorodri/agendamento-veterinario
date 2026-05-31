@@ -263,7 +263,7 @@ CREATE TABLE resultado_consulta (
     id_agendamento BIGINT NOT NULL UNIQUE,
     diagnostico_principal VARCHAR(255) NOT NULL,
     observacoes_veterinario TEXT,
-    data_realizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+    data_realizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT resultado_agendamento_fk FOREIGN KEY (id_agendamento) REFERENCES agendamento(id)
 );
 
